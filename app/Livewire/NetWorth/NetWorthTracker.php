@@ -6,7 +6,6 @@ use App\Models\NetWorthEntry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -14,14 +13,15 @@ use Livewire\Component;
 #[Title('Net Worth')]
 class NetWorthTracker extends Component
 {
-    #[Rule('required|date')]
     public string $date;
 
-    #[Rule('required|numeric|min:0')]
-    public string $assets = '0.00';
+    public array $assetLines = [
+        ['category' => '', 'amount' => '0.00'],
+    ];
 
-    #[Rule('required|numeric|min:0')]
-    public string $liabilities = '0.00';
+    public array $liabilityLines = [
+        ['category' => '', 'amount' => '0.00'],
+    ];
 
     public ?int $entryId = null;
 
@@ -32,9 +32,28 @@ class NetWorthTracker extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
-        $data['user_id'] = Auth::id();
-        $data['net_worth'] = (float) $data['assets'] - (float) $data['liabilities'];
+        $validated = $this->validate(
+            array_merge(
+                $this->rules(),
+                $this->lineItemRules('assetLines'),
+                $this->lineItemRules('liabilityLines'),
+            ),
+            messages: [
+                'assetLines.*.category.required' => 'Asset category is required.',
+                'liabilityLines.*.category.required' => 'Liability category is required.',
+            ],
+        );
+
+        $assetTotal = $this->sumLines($validated['assetLines']);
+        $liabilityTotal = $this->sumLines($validated['liabilityLines']);
+
+        $data = [
+            'user_id' => Auth::id(),
+            'date' => $validated['date'],
+            'assets' => $assetTotal,
+            'liabilities' => $liabilityTotal,
+            'net_worth' => $assetTotal - $liabilityTotal,
+        ];
 
         if (! $this->entryId) {
             $existingEntry = NetWorthEntry::where('user_id', Auth::id())
@@ -46,9 +65,12 @@ class NetWorthTracker extends Component
             }
         }
 
-        NetWorthEntry::updateOrCreate([
+        $entry = NetWorthEntry::updateOrCreate([
             'id' => $this->entryId,
         ], $data);
+
+        $this->syncLineItems($entry, $validated['assetLines'], 'asset');
+        $this->syncLineItems($entry, $validated['liabilityLines'], 'liability');
 
         $this->resetForm();
         session()->flash('status', 'Net worth entry saved.');
@@ -60,8 +82,29 @@ class NetWorthTracker extends Component
 
         $this->entryId = $entry->id;
         $this->date = $entry->date->toDateString();
-        $this->assets = (string) $entry->assets;
-        $this->liabilities = (string) $entry->liabilities;
+        $assetLines = $entry->lineItems
+            ->where('type', 'asset')
+            ->map(fn ($item) => [
+                'category' => $item->category,
+                'amount' => number_format((float) $item->amount, 2, '.', ''),
+            ])->values()->all();
+
+        $liabilityLines = $entry->lineItems
+            ->where('type', 'liability')
+            ->map(fn ($item) => [
+                'category' => $item->category,
+                'amount' => number_format((float) $item->amount, 2, '.', ''),
+            ])->values()->all();
+
+        $this->assetLines = $assetLines ?: [[
+            'category' => 'Assets',
+            'amount' => number_format((float) $entry->assets, 2, '.', ''),
+        ]];
+
+        $this->liabilityLines = $liabilityLines ?: [[
+            'category' => 'Liabilities',
+            'amount' => number_format((float) $entry->liabilities, 2, '.', ''),
+        ]];
     }
 
     public function delete(int $entryId): void
@@ -73,6 +116,7 @@ class NetWorthTracker extends Component
     public function render(): View
     {
         $entries = NetWorthEntry::where('user_id', Auth::id())
+            ->with('lineItems')
             ->orderByDesc('date')
             ->get();
 
@@ -83,14 +127,86 @@ class NetWorthTracker extends Component
 
     public function getCalculatedNetWorthProperty(): string
     {
-        return number_format((float) $this->assets - (float) $this->liabilities, 2);
+        return number_format($this->assetTotal() - $this->liabilityTotal(), 2);
     }
 
     protected function resetForm(): void
     {
         $this->entryId = null;
-        $this->assets = '0.00';
-        $this->liabilities = '0.00';
+        $this->assetLines = [['category' => '', 'amount' => '0.00']];
+        $this->liabilityLines = [['category' => '', 'amount' => '0.00']];
         $this->date = now()->toDateString();
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'date' => 'required|date',
+        ];
+    }
+
+    protected function lineItemRules(string $property): array
+    {
+        return [
+            "$property" => 'required|array|min:1',
+            "$property.*.category" => 'required|string|max:255',
+            "$property.*.amount" => 'required|numeric|min:0',
+        ];
+    }
+
+    protected function sumLines(array $lines): float
+    {
+        return collect($lines)
+            ->sum(fn ($line) => (float) $line['amount']);
+    }
+
+    protected function syncLineItems(NetWorthEntry $entry, array $lines, string $type): void
+    {
+        $entry->lineItems()->where('type', $type)->delete();
+
+        $payload = collect($lines)
+            ->filter(fn ($line) => trim((string) $line['category']) !== '')
+            ->map(fn ($line) => [
+                'user_id' => Auth::id(),
+                'type' => $type,
+                'category' => trim((string) $line['category']),
+                'amount' => (float) $line['amount'],
+            ])->all();
+
+        if ($payload) {
+            $entry->lineItems()->createMany($payload);
+        }
+    }
+
+    protected function assetTotal(): float
+    {
+        return $this->sumLines($this->assetLines);
+    }
+
+    protected function liabilityTotal(): float
+    {
+        return $this->sumLines($this->liabilityLines);
+    }
+
+    public function addAssetLine(): void
+    {
+        $this->assetLines[] = ['category' => '', 'amount' => '0.00'];
+    }
+
+    public function addLiabilityLine(): void
+    {
+        $this->liabilityLines[] = ['category' => '', 'amount' => '0.00'];
+    }
+
+    public function removeAssetLine(int $index): void
+    {
+        unset($this->assetLines[$index]);
+        $this->assetLines = array_values($this->assetLines);
+    }
+
+    public function removeLiabilityLine(int $index): void
+    {
+        unset($this->liabilityLines[$index]);
+        $this->liabilityLines = array_values($this->liabilityLines);
     }
 }
