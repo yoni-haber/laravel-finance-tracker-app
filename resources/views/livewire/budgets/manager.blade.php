@@ -4,7 +4,7 @@
         <form wire:submit.prevent="save" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Category</label>
-                <select wire:model="category_id" class="mt-1 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
+                <select wire:model="category_id" class="mt-2 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
                     <option value="">Select category</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -14,7 +14,7 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Month</label>
-                <select wire:model="month" class="mt-1 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
+                <select wire:model="month" class="mt-2 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
                     @foreach (range(1, 12) as $m)
                         <option value="{{ $m }}">{{ now()->startOfYear()->month($m)->format('F') }}</option>
                     @endforeach
@@ -23,12 +23,12 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Year</label>
-                <input type="number" wire:model="year" min="2000" max="2100" class="mt-1 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700" />
+                <input type="number" wire:model="year" min="2000" max="2100" class="mt-2 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700" />
                 @error('year') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Amount (£)</label>
-                <input type="number" min="0" step="0.01" wire:model="amount" class="mt-1 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700" />
+                <input type="number" min="0" step="0.01" wire:model="amount" class="mt-2 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700" />
                 @error('amount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2 lg:col-span-4 flex items-center gap-3">
