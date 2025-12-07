@@ -10,7 +10,9 @@ use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : view('landing');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
