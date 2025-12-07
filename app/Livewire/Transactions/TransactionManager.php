@@ -34,7 +34,7 @@ class TransactionManager extends Component
     #[Rule('boolean')]
     public bool $is_recurring = false;
 
-    #[Rule('nullable|in:weekly,monthly,yearly')]
+    #[Rule('required_if:is_recurring,true|in:weekly,monthly,yearly')]
     public ?string $frequency = null;
 
     public ?int $transactionId = null;
@@ -89,6 +89,11 @@ class TransactionManager extends Component
     {
         if (! $value) {
             $this->frequency = null;
+            return;
+        }
+
+        if (! $this->frequency) {
+            $this->frequency = 'monthly';
         }
     }
 

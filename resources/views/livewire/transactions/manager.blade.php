@@ -37,10 +37,10 @@
             </div>
             <div class="flex items-center gap-3">
                 <label class="inline-flex items-center">
-                    <input type="checkbox" wire:model="is_recurring" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500" />
+                    <input type="checkbox" wire:model.live="is_recurring" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500" />
                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Recurring</span>
                 </label>
-                <select wire:model="frequency" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm" @disabled(! $is_recurring)>
+                <select wire:model.live="frequency" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm" @disabled(! $is_recurring)>
                     <option value="">Select frequency</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
