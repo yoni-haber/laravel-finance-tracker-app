@@ -23,7 +23,14 @@
         </div>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-3">
+    @if ($schemaMissing)
+        <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-sm">
+            <p class="font-semibold">Database not migrated</p>
+            <p class="text-sm">Run <code>php artisan migrate --seed</code> to create the required tables before using the dashboard.</p>
+        </div>
+    @endif
+
+    <div class="grid gap-4 md:grid-cols-3" @if($schemaMissing) aria-hidden="true" @endif>
         <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <p class="text-sm text-gray-500">Income</p>
             <p class="text-2xl font-semibold text-emerald-600">£{{ number_format($income, 2) }}</p>
@@ -38,7 +45,7 @@
         </div>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-3">
+    <div class="grid gap-6 lg:grid-cols-3" @if($schemaMissing) aria-hidden="true" @endif>
         <div class="lg:col-span-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold">Income vs Expense ({{ $year }})</h3>
@@ -57,7 +64,7 @@
         </div>
     </div>
 
-    <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+    <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900" @if($schemaMissing) aria-hidden="true" @endif>
         <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold">Budgets vs Actuals</h3>
         </div>
@@ -83,53 +90,55 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('livewire:navigated', renderCharts);
-        document.addEventListener('DOMContentLoaded', renderCharts);
+    @unless ($schemaMissing)
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            document.addEventListener('livewire:navigated', renderCharts);
+            document.addEventListener('DOMContentLoaded', renderCharts);
 
-        function renderCharts() {
-            const barCtx = document.getElementById('barChart');
-            const categoryCtx = document.getElementById('categoryChart');
+            function renderCharts() {
+                const barCtx = document.getElementById('barChart');
+                const categoryCtx = document.getElementById('categoryChart');
 
-            if (!barCtx || !categoryCtx) return;
+                if (!barCtx || !categoryCtx) return;
 
-            const barData = {
-                labels: @json($monthlyTrend['labels']),
-                datasets: [
-                    {
-                        label: 'Income',
-                        backgroundColor: '#10b981',
-                        data: @json($monthlyTrend['income'])
-                    },
-                    {
-                        label: 'Expenses',
-                        backgroundColor: '#ef4444',
-                        data: @json($monthlyTrend['expenses'])
+                const barData = {
+                    labels: @json($monthlyTrend['labels']),
+                    datasets: [
+                        {
+                            label: 'Income',
+                            backgroundColor: '#10b981',
+                            data: @json($monthlyTrend['income'])
+                        },
+                        {
+                            label: 'Expenses',
+                            backgroundColor: '#ef4444',
+                            data: @json($monthlyTrend['expenses'])
+                        }
+                    ]
+                };
+
+                new Chart(barCtx, {
+                    type: 'bar',
+                    data: barData,
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
                     }
-                ]
-            };
+                });
 
-            new Chart(barCtx, {
-                type: 'bar',
-                data: barData,
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
+                const categoryData = {
+                    labels: @json($categoryBreakdown->pluck('category')),
+                    datasets: [{
+                        data: @json($categoryBreakdown->pluck('total')),
+                        backgroundColor: ['#1d4ed8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
+                    }]
+                };
 
-            const categoryData = {
-                labels: @json($categoryBreakdown->pluck('category')),
-                datasets: [{
-                    data: @json($categoryBreakdown->pluck('total')),
-                    backgroundColor: ['#1d4ed8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
-                }]
-            };
-
-            new Chart(categoryCtx, { type: 'pie', data: categoryData });
-        }
-    </script>
+                new Chart(categoryCtx, { type: 'pie', data: categoryData });
+            }
+        </script>
+    @endunless
 </div>

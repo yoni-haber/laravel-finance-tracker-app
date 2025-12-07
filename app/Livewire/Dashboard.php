@@ -8,6 +8,7 @@ use App\Support\Money;
 use App\Support\TransactionReport;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -30,6 +31,23 @@ class Dashboard extends Component
     public function render(): View
     {
         $userId = Auth::id();
+
+        if (! $this->schemaReady()) {
+            return view('livewire.dashboard', [
+                'income' => 0,
+                'expenses' => 0,
+                'net' => 0,
+                'budgetSummaries' => collect(),
+                'categoryBreakdown' => collect(),
+                'monthlyTrend' => [
+                    'labels' => collect(range(1, 12))->map(fn ($month) => now()->startOfYear()->month($month)->shortMonthName),
+                    'income' => array_fill(0, 12, 0),
+                    'expenses' => array_fill(0, 12, 0),
+                ],
+                'categories' => collect(),
+                'schemaMissing' => true,
+            ]);
+        }
 
         $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year, $this->categoryId);
         $income = $transactions->where('type', 'income')->sum('amount');
@@ -77,6 +95,7 @@ class Dashboard extends Component
             'categoryBreakdown' => $categoryBreakdown,
             'monthlyTrend' => $monthlyTrend,
             'categories' => Category::where('user_id', $userId)->orderBy('name')->get(),
+            'schemaMissing' => false,
         ]);
     }
 
@@ -99,5 +118,12 @@ class Dashboard extends Component
             'income' => $incomeData,
             'expenses' => $expenseData,
         ];
+    }
+
+    protected function schemaReady(): bool
+    {
+        return Schema::hasTable('transactions')
+            && Schema::hasTable('categories')
+            && Schema::hasTable('budgets');
     }
 }

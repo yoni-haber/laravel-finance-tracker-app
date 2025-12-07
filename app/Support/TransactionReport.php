@@ -4,11 +4,16 @@ namespace App\Support;
 
 use App\Models\Transaction;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class TransactionReport
 {
     public static function monthlyWithRecurring(int $userId, int $month, int $year, ?int $categoryId = null): Collection
     {
+        if (! Schema::hasTable('transactions')) {
+            return collect();
+        }
+
         $baseQuery = Transaction::forUser($userId)
             ->forCategory($categoryId)
             ->with('category')
