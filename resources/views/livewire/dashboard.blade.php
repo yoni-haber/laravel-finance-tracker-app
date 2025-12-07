@@ -12,15 +12,6 @@
             <label class="text-sm text-gray-600 dark:text-gray-300">Year</label>
             <input type="number" wire:model.live="year" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm" min="2000" max="2100">
         </div>
-        <div class="flex items-center gap-2">
-            <label class="text-sm text-gray-600 dark:text-gray-300">Category</label>
-            <select wire:model.live="categoryId" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm">
-                <option value="">All</option>
-                @foreach ($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                @endforeach
-            </select>
-        </div>
     </div>
 
     @if ($schemaMissing)
@@ -48,18 +39,28 @@
     <div class="grid gap-6 lg:grid-cols-3" @if($schemaMissing) aria-hidden="true" @endif>
         <div class="lg:col-span-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold">Income vs Expense ({{ $year }})</h3>
+                <h3 class="text-lg font-semibold">Income vs Expenses</h3>
             </div>
             <div class="mt-4">
                 <canvas id="barChart" wire:ignore class="w-full"></canvas>
             </div>
         </div>
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold">Category breakdown</h3>
+        <div class="space-y-6">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold">Income by Category</h3>
+                </div>
+                <div class="mt-4">
+                    <canvas id="incomeCategoryChart" wire:ignore class="w-full"></canvas>
+                </div>
             </div>
-            <div class="mt-4">
-                <canvas id="categoryChart" wire:ignore class="w-full"></canvas>
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold">Expenses by Category</h3>
+                </div>
+                <div class="mt-4">
+                    <canvas id="expenseCategoryChart" wire:ignore class="w-full"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -94,16 +95,19 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             let barChartInstance;
-            let categoryChartInstance;
+            let incomeCategoryChartInstance;
+            let expenseCategoryChartInstance;
 
             function renderCharts(payload) {
                 const barCtx = document.getElementById('barChart');
-                const categoryCtx = document.getElementById('categoryChart');
+                const incomeCategoryCtx = document.getElementById('incomeCategoryChart');
+                const expenseCategoryCtx = document.getElementById('expenseCategoryChart');
 
-                if (!barCtx || !categoryCtx) return;
+                if (!barCtx || !incomeCategoryCtx || !expenseCategoryCtx) return;
 
                 if (barChartInstance) barChartInstance.destroy();
-                if (categoryChartInstance) categoryChartInstance.destroy();
+                if (incomeCategoryChartInstance) incomeCategoryChartInstance.destroy();
+                if (expenseCategoryChartInstance) expenseCategoryChartInstance.destroy();
 
                 const barData = {
                     labels: payload.monthlyTrend.labels,
@@ -132,25 +136,35 @@
                     }
                 });
 
-                const categoryData = {
-                    labels: payload.categoryBreakdown.map(item => item.category),
+                const incomeCategoryData = {
+                    labels: payload.incomeCategoryBreakdown.map(item => item.category),
                     datasets: [{
-                        data: payload.categoryBreakdown.map(item => item.total),
+                        data: payload.incomeCategoryBreakdown.map(item => item.total),
                         backgroundColor: ['#1d4ed8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
                     }]
                 };
 
-                categoryChartInstance = new Chart(categoryCtx, { type: 'pie', data: categoryData });
+                const expenseCategoryData = {
+                    labels: payload.expenseCategoryBreakdown.map(item => item.category),
+                    datasets: [{
+                        data: payload.expenseCategoryBreakdown.map(item => item.total),
+                        backgroundColor: ['#1d4ed8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
+                    }]
+                };
+
+                incomeCategoryChartInstance = new Chart(incomeCategoryCtx, { type: 'pie', data: incomeCategoryData });
+                expenseCategoryChartInstance = new Chart(expenseCategoryCtx, { type: 'pie', data: expenseCategoryData });
             }
 
             document.addEventListener('DOMContentLoaded', () => renderCharts({
                 monthlyTrend: @json($monthlyTrend),
-                categoryBreakdown: @json($categoryBreakdown->toArray()),
+                incomeCategoryBreakdown: @json($incomeCategoryBreakdown->toArray()),
+                expenseCategoryBreakdown: @json($expenseCategoryBreakdown->toArray()),
             }));
 
             document.addEventListener('livewire:initialized', () => {
-                Livewire.on('dashboard-charts-updated', (monthlyTrend, categoryBreakdown) => {
-                    renderCharts({ monthlyTrend, categoryBreakdown });
+                Livewire.on('dashboard-charts-updated', (monthlyTrend, incomeCategoryBreakdown, expenseCategoryBreakdown) => {
+                    renderCharts({ monthlyTrend, incomeCategoryBreakdown, expenseCategoryBreakdown });
                 });
             });
         </script>

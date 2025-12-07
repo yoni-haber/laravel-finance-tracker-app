@@ -3,12 +3,12 @@
 namespace App\Livewire;
 
 use App\Models\Budget;
-use App\Models\Category;
 use App\Support\Money;
 use App\Support\TransactionReport;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -19,8 +19,6 @@ class Dashboard extends Component
 {
     public int $month;
     public int $year;
-    public ?int $categoryId = null;
-
     public function mount(): void
     {
         $now = now();
@@ -38,18 +36,18 @@ class Dashboard extends Component
                 'expenses' => 0,
                 'net' => 0,
                 'budgetSummaries' => collect(),
-                'categoryBreakdown' => collect(),
+                'incomeCategoryBreakdown' => collect(),
+                'expenseCategoryBreakdown' => collect(),
                 'monthlyTrend' => [
                     'labels' => collect(range(1, 12))->map(fn ($month) => now()->startOfYear()->month($month)->shortMonthName),
                     'income' => array_fill(0, 12, 0),
                     'expenses' => array_fill(0, 12, 0),
                 ],
-                'categories' => collect(),
                 'schemaMissing' => true,
             ]);
         }
 
-        $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year, $this->categoryId);
+        $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year);
         $income = $transactions->where('type', 'income')->sum('amount');
         $expenses = $transactions->where('type', 'expense')->sum('amount');
         $net = Money::subtract($income, $expenses);
@@ -77,19 +75,15 @@ class Dashboard extends Component
             ];
         });
 
-        $categoryBreakdown = $transactions
-            ->where('type', 'expense')
-            ->groupBy('category.name')
-            ->map(fn ($items, $category) => [
-                'category' => $category ?? 'Uncategorised',
-                'total' => $items->sum('amount'),
-            ])->values();
+        $categoryIncome = $this->categoryTotals($transactions, 'income');
+        $categoryExpenses = $this->categoryTotals($transactions, 'expense');
 
         $monthlyTrend = $this->monthlyTrend($userId);
 
         $this->dispatch('dashboard-charts-updated',
             monthlyTrend: $monthlyTrend,
-            categoryBreakdown: $categoryBreakdown->all(),
+            incomeCategoryBreakdown: $categoryIncome->all(),
+            expenseCategoryBreakdown: $categoryExpenses->all(),
         );
 
         return view('livewire.dashboard', [
@@ -97,16 +91,16 @@ class Dashboard extends Component
             'expenses' => $expenses,
             'net' => $net,
             'budgetSummaries' => $budgetSummaries,
-            'categoryBreakdown' => $categoryBreakdown,
+            'incomeCategoryBreakdown' => $categoryIncome,
+            'expenseCategoryBreakdown' => $categoryExpenses,
             'monthlyTrend' => $monthlyTrend,
-            'categories' => Category::where('user_id', $userId)->orderBy('name')->get(),
             'schemaMissing' => false,
         ]);
     }
 
     protected function monthlyTrend(int $userId): array
     {
-        $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year, $this->categoryId);
+        $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year);
 
         $label = now()->setDate($this->year, $this->month, 1)->format('F Y');
         $incomeTotal = (float) $transactions->where('type', 'income')->sum('amount');
@@ -124,5 +118,16 @@ class Dashboard extends Component
         return Schema::hasTable('transactions')
             && Schema::hasTable('categories')
             && Schema::hasTable('budgets');
+    }
+
+    private function categoryTotals(Collection $transactions, string $type): Collection
+    {
+        return $transactions
+            ->where('type', $type)
+            ->groupBy('category.name')
+            ->map(fn ($items, $category) => [
+                'category' => $category ?? 'Uncategorised',
+                'total' => $items->sum('amount'),
+            ])->values();
     }
 }
