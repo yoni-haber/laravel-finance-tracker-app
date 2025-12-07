@@ -91,12 +91,19 @@ class Transaction extends Model
                 $occurrences->push($this->replicateForDate($current));
             }
 
-            match ($this->frequency) {
-                'weekly' => $current->addWeek(),
-                'monthly' => $current->addMonth(),
-                'yearly' => $current->addYear(),
-                default => break 2,
-            };
+            switch ($this->frequency) {
+                case 'weekly':
+                    $current->addWeek();
+                    break;
+                case 'monthly':
+                    $current->addMonth();
+                    break;
+                case 'yearly':
+                    $current->addYear();
+                    break;
+                default:
+                    break 2;
+            }
         }
 
         return $occurrences;
