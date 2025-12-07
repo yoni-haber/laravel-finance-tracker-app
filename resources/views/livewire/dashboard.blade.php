@@ -82,6 +82,10 @@
     </div>
 
     @unless ($schemaMissing)
+        <div id="dashboardChartPayload" class="hidden"
+            data-income-breakdown='@json($incomeCategoryBreakdown->toArray())'
+            data-expense-breakdown='@json($expenseCategoryBreakdown->toArray())'></div>
+
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             let incomeCategoryChartInstance;
@@ -91,7 +95,7 @@
                 const incomeCategoryCtx = document.getElementById('incomeCategoryChart');
                 const expenseCategoryCtx = document.getElementById('expenseCategoryChart');
 
-                if (!incomeCategoryCtx || !expenseCategoryCtx) return;
+                if (!incomeCategoryCtx || !expenseCategoryCtx || !payload) return;
 
                 if (incomeCategoryChartInstance) incomeCategoryChartInstance.destroy();
                 if (expenseCategoryChartInstance) expenseCategoryChartInstance.destroy();
@@ -116,17 +120,29 @@
                 expenseCategoryChartInstance = new Chart(expenseCategoryCtx, { type: 'pie', data: expenseCategoryData });
             }
 
-            const initialPayload = {
-                incomeCategoryBreakdown: @json($incomeCategoryBreakdown->toArray()),
-                expenseCategoryBreakdown: @json($expenseCategoryBreakdown->toArray()),
-            };
+            function getPayloadFromDom() {
+                const payloadNode = document.getElementById('dashboardChartPayload');
+                if (!payloadNode) return null;
 
-            const initializeCharts = () => renderCharts(initialPayload);
+                try {
+                    return {
+                        incomeCategoryBreakdown: JSON.parse(payloadNode.dataset.incomeBreakdown ?? '[]'),
+                        expenseCategoryBreakdown: JSON.parse(payloadNode.dataset.expenseBreakdown ?? '[]'),
+                    };
+                } catch (error) {
+                    console.error('Unable to parse dashboard chart payload', error);
+                    return null;
+                }
+            }
+
+            const initializeCharts = () => renderCharts(getPayloadFromDom());
 
             document.addEventListener('DOMContentLoaded', initializeCharts);
             document.addEventListener('livewire:navigated', initializeCharts);
 
             document.addEventListener('livewire:initialized', () => {
+                initializeCharts();
+
                 Livewire.on('dashboard-charts-updated', (incomeCategoryBreakdown, expenseCategoryBreakdown) => {
                     renderCharts({ incomeCategoryBreakdown, expenseCategoryBreakdown });
                 });
