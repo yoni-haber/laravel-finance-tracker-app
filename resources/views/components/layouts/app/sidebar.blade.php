@@ -21,6 +21,8 @@
                 </flux:navlist.group>
             </flux:navlist>
 
+            <flux:spacer />
+
             <!-- Desktop User Menu -->
             <flux:dropdown class="hidden lg:block" position="bottom" align="start">
                 <flux:profile
