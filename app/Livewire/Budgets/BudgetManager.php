@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Livewire\Budgets;
+
+use App\Models\Budget;
+use App\Models\Category;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Rule;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+#[Layout('components.layouts.app')]
+#[Title('Budgets')]
+class BudgetManager extends Component
+{
+    #[Rule('required|exists:categories,id')]
+    public ?int $category_id = null;
+
+    #[Rule('required|integer|min:1|max:12')]
+    public int $month;
+
+    #[Rule('required|integer|min:2000|max:2100')]
+    public int $year;
+
+    #[Rule('required|numeric|min:0')]
+    public string $amount = '0.00';
+
+    public ?int $budgetId = null;
+
+    public function mount(): void
+    {
+        $now = now();
+        $this->month = (int) $now->month;
+        $this->year = (int) $now->year;
+    }
+
+    public function save(): void
+    {
+        $data = $this->validate();
+        $data['user_id'] = Auth::id();
+
+        Budget::updateOrCreate([
+            'id' => $this->budgetId,
+        ], $data);
+
+        $this->resetForm();
+        session()->flash('status', 'Budget saved.');
+    }
+
+    public function edit(int $budgetId): void
+    {
+        $budget = Budget::where('user_id', Auth::id())->findOrFail($budgetId);
+        $this->budgetId = $budget->id;
+        $this->category_id = $budget->category_id;
+        $this->month = $budget->month;
+        $this->year = $budget->year;
+        $this->amount = (string) $budget->amount;
+    }
+
+    public function delete(int $budgetId): void
+    {
+        Budget::where('user_id', Auth::id())->where('id', $budgetId)->delete();
+        session()->flash('status', 'Budget removed.');
+    }
+
+    public function render(): View
+    {
+        $userId = Auth::id();
+
+        $budgets = Budget::with('category')
+            ->where('user_id', $userId)
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->get();
+
+        return view('livewire.budgets.manager', [
+            'budgets' => $budgets,
+            'categories' => Category::where('user_id', $userId)->orderBy('name')->get(),
+        ]);
+    }
+
+    protected function resetForm(): void
+    {
+        $this->budgetId = null;
+        $this->category_id = null;
+        $this->amount = '0.00';
+    }
+}
