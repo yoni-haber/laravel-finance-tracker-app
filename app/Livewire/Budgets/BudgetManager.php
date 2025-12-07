@@ -28,12 +28,17 @@ class BudgetManager extends Component
     public string $amount = '0.00';
 
     public ?int $budgetId = null;
+    public ?int $filterCategory = null;
+    public int $filterMonth;
+    public int $filterYear;
 
     public function mount(): void
     {
         $now = now();
         $this->month = (int) $now->month;
         $this->year = (int) $now->year;
+        $this->filterMonth = (int) $now->month;
+        $this->filterYear = (int) $now->year;
     }
 
     public function save(): void
@@ -71,6 +76,9 @@ class BudgetManager extends Component
 
         $budgets = Budget::with('category')
             ->where('user_id', $userId)
+            ->when($this->filterCategory, fn ($query) => $query->where('category_id', $this->filterCategory))
+            ->when($this->filterMonth, fn ($query) => $query->where('month', $this->filterMonth))
+            ->when($this->filterYear, fn ($query) => $query->where('year', $this->filterYear))
             ->orderByDesc('year')
             ->orderByDesc('month')
             ->get();

@@ -44,7 +44,23 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <h3 class="text-lg font-semibold">Defined budgets</h3>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <h3 class="text-lg font-semibold">Defined budgets</h3>
+            <div class="flex gap-2 text-sm">
+                <select wire:model.live="filterMonth" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
+                    @foreach (range(1, 12) as $m)
+                        <option value="{{ $m }}">{{ now()->startOfYear()->month($m)->shortMonthName }}</option>
+                    @endforeach
+                </select>
+                <input type="number" wire:model.live="filterYear" class="w-24 rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700" min="2000" max="2100" />
+                <select wire:model.live="filterCategory" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
+                    <option value="">All categories</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
         <div class="mt-4 overflow-x-auto">
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700 text-sm">
                 <thead class="bg-zinc-50 dark:bg-zinc-800">
