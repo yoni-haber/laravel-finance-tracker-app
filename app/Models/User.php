@@ -3,6 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Asset;
+use App\Models\AssetGroup;
+use App\Models\Liability;
+use App\Models\LiabilityGroup;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -60,5 +64,25 @@ class User extends Authenticatable
             ->take(2)
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    public function assets()
+    {
+        return $this->hasMany(Asset::class);
+    }
+
+    public function assetGroups()
+    {
+        return $this->hasMany(AssetGroup::class);
+    }
+
+    public function liabilities()
+    {
+        return $this->hasMany(Liability::class);
+    }
+
+    public function liabilityGroups()
+    {
+        return $this->hasMany(LiabilityGroup::class);
     }
 }

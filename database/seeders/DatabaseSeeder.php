@@ -3,7 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\Budget;
+use App\Models\Asset;
+use App\Models\AssetGroup;
 use App\Models\Category;
+use App\Models\Liability;
+use App\Models\LiabilityGroup;
+use App\Models\NetWorthSnapshot;
+use App\Models\NetWorthSnapshotItem;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -95,5 +101,73 @@ class DatabaseSeeder extends Seeder
                 'date' => $current->copy()->startOfMonth(),
                 'description' => 'Travel card',
             ]);
+
+        $assetGroups = [
+            'Cash & Bank' => ['Current Account', 'Savings Account'],
+            'Investments' => ['Index Fund', 'Shares ISA'],
+        ];
+
+        collect($assetGroups)->each(function (array $assets, string $groupName) use ($user): void {
+            $group = AssetGroup::create([
+                'user_id' => $user->id,
+                'name' => $groupName,
+            ]);
+
+            collect($assets)->each(fn (string $name) => Asset::create([
+                'user_id' => $user->id,
+                'asset_group_id' => $group->id,
+                'name' => $name,
+            ]));
+        });
+
+        $liabilityGroups = [
+            'Credit Cards' => ['Visa Card'],
+            'Loans' => ['Student Loan'],
+        ];
+
+        collect($liabilityGroups)->each(function (array $liabilities, string $groupName) use ($user): void {
+            $group = LiabilityGroup::create([
+                'user_id' => $user->id,
+                'name' => $groupName,
+            ]);
+
+            collect($liabilities)->each(fn (string $name) => Liability::create([
+                'user_id' => $user->id,
+                'liability_group_id' => $group->id,
+                'name' => $name,
+            ]));
+        });
+
+        $snapshot = NetWorthSnapshot::create([
+            'user_id' => $user->id,
+            'snapshot_date' => now()->subDays(5),
+            'notes' => 'Initial snapshot',
+        ]);
+
+        foreach ($user->assets as $asset) {
+            NetWorthSnapshotItem::create([
+                'net_worth_snapshot_id' => $snapshot->id,
+                'item_type' => NetWorthSnapshotItem::TYPE_ASSET,
+                'item_id' => $asset->id,
+                'value' => match ($asset->name) {
+                    'Current Account' => 950,
+                    'Savings Account' => 2500,
+                    'Index Fund' => 4200,
+                    default => 1200,
+                },
+            ]);
+        }
+
+        foreach ($user->liabilities as $liability) {
+            NetWorthSnapshotItem::create([
+                'net_worth_snapshot_id' => $snapshot->id,
+                'item_type' => NetWorthSnapshotItem::TYPE_LIABILITY,
+                'item_id' => $liability->id,
+                'value' => match ($liability->name) {
+                    'Visa Card' => 450,
+                    default => 2200,
+                },
+            ]);
+        }
     }
 }

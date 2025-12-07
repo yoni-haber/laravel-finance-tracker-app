@@ -3,6 +3,8 @@
 use App\Livewire\Budgets\BudgetManager;
 use App\Livewire\Categories\CategoryManager;
 use App\Livewire\Dashboard;
+use App\Livewire\NetWorth\AssetManager;
+use App\Livewire\NetWorth\LiabilityManager;
 use App\Livewire\Reports\ReportsHub;
 use App\Livewire\Transactions\TransactionManager;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('transactions', TransactionManager::class)->name('transactions');
     Route::get('categories', CategoryManager::class)->name('categories');
     Route::get('budgets', BudgetManager::class)->name('budgets');
+    Route::get('net-worth/assets', AssetManager::class)->name('net-worth.assets');
+    Route::get('net-worth/liabilities', LiabilityManager::class)->name('net-worth.liabilities');
     Route::get('reports', ReportsHub::class)->name('reports');
 
     Route::redirect('settings', 'settings/profile');
