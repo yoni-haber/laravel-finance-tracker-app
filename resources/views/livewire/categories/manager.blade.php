@@ -3,7 +3,8 @@
         <h3 class="text-lg font-semibold mb-4">Add / Edit Category</h3>
         <form wire:submit.prevent="save" class="flex flex-wrap items-center gap-3">
             <div class="flex-1 min-w-[200px]">
-                <input type="text" wire:model="name" placeholder="Category name" class="w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700" />
+                <label class="block text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Category Name</label>
+                <input type="text" wire:model="name" placeholder="Category name" class="mt-1 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700" />
                 @error('name') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <button type="submit" class="rounded-md bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">Save</button>
