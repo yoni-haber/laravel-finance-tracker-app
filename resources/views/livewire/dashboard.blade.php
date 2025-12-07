@@ -116,10 +116,15 @@
                 expenseCategoryChartInstance = new Chart(expenseCategoryCtx, { type: 'pie', data: expenseCategoryData });
             }
 
-            document.addEventListener('DOMContentLoaded', () => renderCharts({
+            const initialPayload = {
                 incomeCategoryBreakdown: @json($incomeCategoryBreakdown->toArray()),
                 expenseCategoryBreakdown: @json($expenseCategoryBreakdown->toArray()),
-            }));
+            };
+
+            const initializeCharts = () => renderCharts(initialPayload);
+
+            document.addEventListener('DOMContentLoaded', initializeCharts);
+            document.addEventListener('livewire:navigated', initializeCharts);
 
             document.addEventListener('livewire:initialized', () => {
                 Livewire.on('dashboard-charts-updated', (incomeCategoryBreakdown, expenseCategoryBreakdown) => {
