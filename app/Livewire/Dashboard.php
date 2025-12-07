@@ -38,11 +38,6 @@ class Dashboard extends Component
                 'budgetSummaries' => collect(),
                 'incomeCategoryBreakdown' => collect(),
                 'expenseCategoryBreakdown' => collect(),
-                'monthlyTrend' => [
-                    'labels' => collect(range(1, 12))->map(fn ($month) => now()->startOfYear()->month($month)->shortMonthName),
-                    'income' => array_fill(0, 12, 0),
-                    'expenses' => array_fill(0, 12, 0),
-                ],
                 'schemaMissing' => true,
             ]);
         }
@@ -78,10 +73,7 @@ class Dashboard extends Component
         $categoryIncome = $this->categoryTotals($transactions, 'income');
         $categoryExpenses = $this->categoryTotals($transactions, 'expense');
 
-        $monthlyTrend = $this->monthlyTrend($userId);
-
         $this->dispatch('dashboard-charts-updated',
-            monthlyTrend: $monthlyTrend,
             incomeCategoryBreakdown: $categoryIncome->all(),
             expenseCategoryBreakdown: $categoryExpenses->all(),
         );
@@ -93,24 +85,8 @@ class Dashboard extends Component
             'budgetSummaries' => $budgetSummaries,
             'incomeCategoryBreakdown' => $categoryIncome,
             'expenseCategoryBreakdown' => $categoryExpenses,
-            'monthlyTrend' => $monthlyTrend,
             'schemaMissing' => false,
         ]);
-    }
-
-    protected function monthlyTrend(int $userId): array
-    {
-        $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year);
-
-        $label = now()->setDate($this->year, $this->month, 1)->format('F Y');
-        $incomeTotal = (float) $transactions->where('type', 'income')->sum('amount');
-        $expenseTotal = (float) $transactions->where('type', 'expense')->sum('amount');
-
-        return [
-            'labels' => [$label],
-            'income' => [$incomeTotal],
-            'expenses' => [$expenseTotal],
-        ];
     }
 
     protected function schemaReady(): bool
