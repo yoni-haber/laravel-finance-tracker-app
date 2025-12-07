@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Reports;
 
+use App\Models\NetWorthEntry;
 use App\Support\TransactionReport;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -16,16 +17,19 @@ class ReportsHub extends Component
     public string $range = '12_months';
 
     public array $chartData = [];
+    public array $netWorthData = [];
 
     public function mount(): void
     {
         $this->chartData = $this->chartDataForRange($this->range, Auth::id());
+        $this->netWorthData = $this->netWorthChartData(Auth::id());
     }
 
     public function render(): View
     {
         return view('livewire.reports.hub', [
             'chartData' => $this->chartData,
+            'netWorthData' => $this->netWorthData,
             'rangeOptions' => $this->rangeOptions(),
         ]);
     }
@@ -37,8 +41,10 @@ class ReportsHub extends Component
         }
 
         $this->chartData = $this->chartDataForRange($this->range, Auth::id());
+        $this->netWorthData = $this->netWorthChartData(Auth::id());
 
         $this->dispatch('reports-chart-data', chartData: $this->chartData);
+        $this->dispatch('net-worth-chart-data', chartData: $this->netWorthData);
     }
 
     protected function chartDataForRange(string $range, int $userId): array
@@ -65,6 +71,22 @@ class ReportsHub extends Component
         }
 
         return compact('labels', 'income', 'expenses');
+    }
+
+    protected function netWorthChartData(int $userId): array
+    {
+        $labels = [];
+        $netWorth = [];
+
+        NetWorthEntry::forUser($userId)
+            ->orderBy('date')
+            ->get()
+            ->each(function ($entry) use (&$labels, &$netWorth) {
+                $labels[] = $entry->date->format('j M Y');
+                $netWorth[] = (float) $entry->net_worth;
+            });
+
+        return compact('labels', 'netWorth');
     }
 
     protected function rangeOptions(): array
