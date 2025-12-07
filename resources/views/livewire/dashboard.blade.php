@@ -36,8 +36,8 @@
         </div>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-2" @if($schemaMissing) aria-hidden="true" @endif>
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+    <div class="flex flex-row gap-6" @if($schemaMissing) aria-hidden="true" @endif>
+        <div class="flex-1 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold">Income by Category</h3>
             </div>
@@ -45,7 +45,7 @@
                 <canvas id="incomeCategoryChart" wire:ignore class="w-full"></canvas>
             </div>
         </div>
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="flex-1 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold">Expenses by Category</h3>
             </div>
