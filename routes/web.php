@@ -3,6 +3,7 @@
 use App\Livewire\Budgets\BudgetManager;
 use App\Livewire\Categories\CategoryManager;
 use App\Livewire\Dashboard;
+use App\Livewire\NetWorth\NetWorthTracker;
 use App\Livewire\Reports\ReportsHub;
 use App\Livewire\Transactions\TransactionManager;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('transactions', TransactionManager::class)->name('transactions');
     Route::get('categories', CategoryManager::class)->name('categories');
     Route::get('budgets', BudgetManager::class)->name('budgets');
+    Route::get('net-worth', NetWorthTracker::class)->name('net-worth');
     Route::get('reports', ReportsHub::class)->name('reports');
 
     Route::redirect('settings', 'settings/profile');

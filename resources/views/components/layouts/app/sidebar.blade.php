@@ -17,6 +17,7 @@
                     <flux:navlist.item icon="banknotes" :href="route('transactions')" :current="request()->routeIs('transactions')" wire:navigate>{{ __('Transactions') }}</flux:navlist.item>
                     <flux:navlist.item icon="tag" :href="route('categories')" :current="request()->routeIs('categories')" wire:navigate>{{ __('Categories') }}</flux:navlist.item>
                     <flux:navlist.item icon="wallet" :href="route('budgets')" :current="request()->routeIs('budgets')" wire:navigate>{{ __('Budgets') }}</flux:navlist.item>
+                    <flux:navlist.item icon="chart-bar" :href="route('net-worth')" :current="request()->routeIs('net-worth')" wire:navigate>{{ __('Net Worth') }}</flux:navlist.item>
                     <flux:navlist.item icon="presentation-chart-bar" :href="route('reports')" :current="request()->routeIs('reports')" wire:navigate>{{ __('Reports') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
