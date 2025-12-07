@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Reports;
 
+use App\Models\NetWorthEntry;
 use App\Support\TransactionReport;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -17,15 +18,19 @@ class ReportsHub extends Component
 
     public array $chartData = [];
 
+    public array $netWorthChartData = [];
+
     public function mount(): void
     {
         $this->chartData = $this->chartDataForRange($this->range, Auth::id());
+        $this->netWorthChartData = $this->buildNetWorthChartData(Auth::id());
     }
 
     public function render(): View
     {
         return view('livewire.reports.hub', [
             'chartData' => $this->chartData,
+            'netWorthChartData' => $this->netWorthChartData,
             'rangeOptions' => $this->rangeOptions(),
         ]);
     }
@@ -65,6 +70,19 @@ class ReportsHub extends Component
         }
 
         return compact('labels', 'income', 'expenses');
+    }
+
+    protected function buildNetWorthChartData(int $userId): array
+    {
+        $entries = NetWorthEntry::where('user_id', $userId)
+            ->where('date', '>=', now()->subMonths(12)->startOfDay())
+            ->orderBy('date')
+            ->get();
+
+        return [
+            'labels' => $entries->pluck('date')->map(fn ($date) => $date->format('M d, Y'))->all(),
+            'netWorth' => $entries->pluck('net_worth')->map(fn ($value) => (float) $value)->all(),
+        ];
     }
 
     protected function rangeOptions(): array
