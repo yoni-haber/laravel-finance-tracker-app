@@ -1,8 +1,8 @@
-<div class="space-y-6" x-data="{ month: @entangle('month'), year: @entangle('year'), categoryId: @entangle('categoryId') }">
+<div class="space-y-6">
     <div class="flex flex-wrap gap-3 items-center">
         <div class="flex items-center gap-2">
             <label class="text-sm text-gray-600 dark:text-gray-300">Month</label>
-            <select x-model="month" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm">
+            <select wire:model.live="month" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm">
                 @foreach (range(1, 12) as $m)
                     <option value="{{ $m }}">{{ now()->startOfYear()->month($m)->format('F') }}</option>
                 @endforeach
@@ -10,11 +10,11 @@
         </div>
         <div class="flex items-center gap-2">
             <label class="text-sm text-gray-600 dark:text-gray-300">Year</label>
-            <input type="number" x-model="year" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm" min="2000" max="2100">
+            <input type="number" wire:model.live="year" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm" min="2000" max="2100">
         </div>
         <div class="flex items-center gap-2">
             <label class="text-sm text-gray-600 dark:text-gray-300">Category</label>
-            <select x-model="categoryId" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm">
+            <select wire:model.live="categoryId" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm">
                 <option value="">All</option>
                 @foreach ($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -93,32 +93,35 @@
     @unless ($schemaMissing)
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
-            document.addEventListener('livewire:navigated', renderCharts);
-            document.addEventListener('DOMContentLoaded', renderCharts);
+            let barChartInstance;
+            let categoryChartInstance;
 
-            function renderCharts() {
+            function renderCharts(payload) {
                 const barCtx = document.getElementById('barChart');
                 const categoryCtx = document.getElementById('categoryChart');
 
                 if (!barCtx || !categoryCtx) return;
 
+                if (barChartInstance) barChartInstance.destroy();
+                if (categoryChartInstance) categoryChartInstance.destroy();
+
                 const barData = {
-                    labels: @json($monthlyTrend['labels']),
+                    labels: payload.monthlyTrend.labels,
                     datasets: [
                         {
                             label: 'Income',
                             backgroundColor: '#10b981',
-                            data: @json($monthlyTrend['income'])
+                            data: payload.monthlyTrend.income
                         },
                         {
                             label: 'Expenses',
                             backgroundColor: '#ef4444',
-                            data: @json($monthlyTrend['expenses'])
+                            data: payload.monthlyTrend.expenses
                         }
                     ]
                 };
 
-                new Chart(barCtx, {
+                barChartInstance = new Chart(barCtx, {
                     type: 'bar',
                     data: barData,
                     options: {
@@ -130,15 +133,24 @@
                 });
 
                 const categoryData = {
-                    labels: @json($categoryBreakdown->pluck('category')),
+                    labels: payload.categoryBreakdown.map(item => item.category),
                     datasets: [{
-                        data: @json($categoryBreakdown->pluck('total')),
+                        data: payload.categoryBreakdown.map(item => item.total),
                         backgroundColor: ['#1d4ed8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
                     }]
                 };
 
-                new Chart(categoryCtx, { type: 'pie', data: categoryData });
+                categoryChartInstance = new Chart(categoryCtx, { type: 'pie', data: categoryData });
             }
+
+            document.addEventListener('DOMContentLoaded', () => renderCharts({
+                monthlyTrend: @json($monthlyTrend),
+                categoryBreakdown: @json($categoryBreakdown->toArray()),
+            }));
+
+            document.addEventListener('livewire:initialized', () => {
+                Livewire.on('dashboard-charts-updated', (data) => renderCharts(data));
+            });
         </script>
     @endunless
 </div>

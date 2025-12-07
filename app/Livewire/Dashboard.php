@@ -87,6 +87,11 @@ class Dashboard extends Component
 
         $monthlyTrend = $this->monthlyTrend($userId);
 
+        $this->dispatch('dashboard-charts-updated',
+            monthlyTrend: $monthlyTrend,
+            categoryBreakdown: $categoryBreakdown->all(),
+        );
+
         return view('livewire.dashboard', [
             'income' => $income,
             'expenses' => $expenses,
@@ -101,22 +106,16 @@ class Dashboard extends Component
 
     protected function monthlyTrend(int $userId): array
     {
-        $months = collect(range(1, 12));
-        $currentYear = $this->year;
+        $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year, $this->categoryId);
 
-        $incomeData = [];
-        $expenseData = [];
-
-        foreach ($months as $month) {
-            $transactions = TransactionReport::monthlyWithRecurring($userId, $month, $currentYear);
-            $incomeData[] = (float) $transactions->where('type', 'income')->sum('amount');
-            $expenseData[] = (float) $transactions->where('type', 'expense')->sum('amount');
-        }
+        $label = now()->setDate($this->year, $this->month, 1)->format('F Y');
+        $incomeTotal = (float) $transactions->where('type', 'income')->sum('amount');
+        $expenseTotal = (float) $transactions->where('type', 'expense')->sum('amount');
 
         return [
-            'labels' => $months->map(fn ($month) => now()->startOfYear()->month($month)->shortMonthName),
-            'income' => $incomeData,
-            'expenses' => $expenseData,
+            'labels' => [$label],
+            'income' => [$incomeTotal],
+            'expenses' => [$expenseTotal],
         ];
     }
 
