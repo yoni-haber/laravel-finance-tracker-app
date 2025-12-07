@@ -36,9 +36,9 @@
                 @error('description') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="flex items-center gap-3">
-                <label class="inline-flex items-center">
+                <label class="inline-flex items-center gap-2">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Recurring</span>
                     <input type="checkbox" wire:model.live="is_recurring" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500" />
-                    <span class="ml-2 text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Recurring</span>
                 </label>
                 <select wire:model.live="frequency" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm" @disabled(! $is_recurring)>
                     <option value="">Select frequency</option>
