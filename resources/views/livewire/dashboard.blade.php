@@ -149,7 +149,9 @@
             }));
 
             document.addEventListener('livewire:initialized', () => {
-                Livewire.on('dashboard-charts-updated', (data) => renderCharts(data));
+                Livewire.on('dashboard-charts-updated', (monthlyTrend, categoryBreakdown) => {
+                    renderCharts({ monthlyTrend, categoryBreakdown });
+                });
             });
         </script>
     @endunless
