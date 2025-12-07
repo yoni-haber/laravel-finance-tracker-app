@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Casts\AsDecimal;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,7 +26,7 @@ class Transaction extends Model
     protected function casts(): array
     {
         return [
-            'amount' => AsDecimal::class.':2',
+            'amount' => 'decimal:2',
             'date' => 'date',
             'is_recurring' => 'boolean',
         ];
