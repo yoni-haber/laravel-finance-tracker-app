@@ -1,120 +1,118 @@
-<div class="space-y-6" x-data="{ month: @entangle('month'), year: @entangle('year'), categoryId: @entangle('categoryId') }">
-    <div class="flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-2">
-            <label class="text-sm text-gray-600 dark:text-gray-300">Month</label>
-            <select x-model="month" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm">
-                @foreach (range(1, 12) as $m)
-                    <option value="{{ $m }}">{{ now()->startOfYear()->month($m)->format('F') }}</option>
-                @endforeach
-            </select>
+<div class="space-y-6">
+    <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h3 class="text-lg font-semibold">Income vs Expenditure</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Compare totals for your selected range.</p>
+            </div>
+            <label class="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                <select
+                    aria-label="Chart range"
+                    wire:model.live="range"
+                    class="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:border-indigo-500/60 dark:bg-gradient-to-b dark:from-zinc-800 dark:to-zinc-900 dark:text-gray-100 dark:shadow-[0_0_0_1px_rgba(99,102,241,0.4)]"
+                >
+                    @foreach ($rangeOptions as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
         </div>
-        <div class="flex items-center gap-2">
-            <label class="text-sm text-gray-600 dark:text-gray-300">Year</label>
-            <input type="number" x-model="year" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm" min="2000" max="2100">
-        </div>
-        <div class="flex items-center gap-2">
-            <label class="text-sm text-gray-600 dark:text-gray-300">Category</label>
-            <select x-model="categoryId" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700 text-sm">
-                <option value="">All</option>
-                @foreach ($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                @endforeach
-            </select>
-        </div>
-    </div>
 
-    <div class="grid gap-4 md:grid-cols-3">
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <p class="text-sm text-gray-500">Monthly Income</p>
-            <p class="text-2xl font-semibold text-emerald-600">£{{ number_format($monthly['income'], 2) }}</p>
-        </div>
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <p class="text-sm text-gray-500">Monthly Expenses</p>
-            <p class="text-2xl font-semibold text-rose-600">£{{ number_format($monthly['expenses'], 2) }}</p>
-        </div>
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <p class="text-sm text-gray-500">Monthly Net</p>
-            <p class="text-2xl font-semibold {{ $monthly['net'] >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">£{{ number_format($monthly['net'], 2) }}</p>
-        </div>
-    </div>
-
-    <div class="grid gap-4 md:grid-cols-3">
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <p class="text-sm text-gray-500">Yearly Income</p>
-            <p class="text-2xl font-semibold text-emerald-600">£{{ number_format($yearly['income'], 2) }}</p>
-        </div>
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <p class="text-sm text-gray-500">Yearly Expenses</p>
-            <p class="text-2xl font-semibold text-rose-600">£{{ number_format($yearly['expenses'], 2) }}</p>
-        </div>
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <p class="text-sm text-gray-500">Yearly Net</p>
-            <p class="text-2xl font-semibold {{ $yearly['net'] >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">£{{ number_format($yearly['net'], 2) }}</p>
-        </div>
-    </div>
-
-    <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <h3 class="text-lg font-semibold">Budget vs Actual</h3>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @forelse ($budgetComparison as $comparison)
-                <div class="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
-                    <p class="text-sm font-medium">{{ $comparison['category'] }}</p>
-                    <p class="text-xs text-gray-500">Budget £{{ number_format($comparison['budget'], 2) }}</p>
-                    <p class="text-xs text-gray-500">Actual £{{ number_format($comparison['actual'], 2) }}</p>
-                    <p class="mt-2 text-sm {{ $comparison['overspent'] ? 'text-rose-600' : 'text-emerald-600' }}">{{ $comparison['overspent'] ? 'Overspent' : 'Remaining' }} £{{ number_format($comparison['remaining'], 2) }}</p>
-                </div>
-            @empty
-                <p class="text-sm text-gray-500">No budgets defined for this period.</p>
-            @endforelse
-        </div>
-    </div>
-
-    <div class="grid gap-6 lg:grid-cols-2">
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-            <h3 class="text-lg font-semibold">Monthly performance</h3>
-            <canvas id="reportBarChart" wire:ignore class="mt-4"></canvas>
-        </div>
-        <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-            <h3 class="text-lg font-semibold">Category breakdown</h3>
-            <canvas id="reportPieChart" wire:ignore class="mt-4"></canvas>
-        </div>
+        <canvas
+            id="incomeVsExpensesChart"
+            wire:ignore
+            data-chart-data='@json($chartData)'
+            class="mt-6"
+        ></canvas>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('livewire:navigated', renderReports);
-        document.addEventListener('DOMContentLoaded', renderReports);
+        (() => {
+            if (window.incomeVsExpensesChartInitialized) return;
+            window.incomeVsExpensesChartInitialized = true;
 
-        function renderReports() {
-            const bar = document.getElementById('reportBarChart');
-            const pie = document.getElementById('reportPieChart');
-            if (!bar || !pie) return;
+            let chartInstance;
 
-            new Chart(bar, {
-                type: 'bar',
-                data: {
-                    labels: @json($barChart['labels']),
-                    datasets: [
-                        { label: 'Income', backgroundColor: '#10b981', data: @json($barChart['income']) },
-                        { label: 'Expenses', backgroundColor: '#ef4444', data: @json($barChart['expenses']) }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: { y: { beginAtZero: true } }
+            const renderIncomeVsExpensesChart = (chartData) => {
+                const chartElement = document.getElementById('incomeVsExpensesChart');
+                if (!chartElement) return;
+
+                if (chartInstance) {
+                    chartInstance.destroy();
                 }
-            });
 
-            new Chart(pie, {
-                type: 'pie',
-                data: {
-                    labels: @json(collect($categoryBreakdown)->pluck('category')),
-                    datasets: [{
-                        data: @json(collect($categoryBreakdown)->pluck('expenses')),
-                        backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1']
-                    }]
+                chartInstance = new Chart(chartElement, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [
+                            {
+                                label: 'Income',
+                                data: chartData.income,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                tension: 0.3,
+                                fill: true,
+                            },
+                            {
+                                label: 'Expenses',
+                                data: chartData.expenses,
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                tension: 0.3,
+                                fill: true,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: (value) => `£${value}`,
+                                },
+                            },
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    usePointStyle: true,
+                                },
+                            },
+                        },
+                    },
+                });
+            };
+
+            const hydrateFromElement = () => {
+                const chartElement = document.getElementById('incomeVsExpensesChart');
+                if (!chartElement) return;
+
+                const data = chartElement.dataset.chartData;
+                if (!data) return;
+
+                try {
+                    renderIncomeVsExpensesChart(JSON.parse(data));
+                } catch (error) {
+                    console.error('Unable to parse chart data', error);
                 }
+            };
+
+            document.addEventListener('DOMContentLoaded', hydrateFromElement);
+            document.addEventListener('livewire:navigated', hydrateFromElement);
+
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('reports-chart-data', (payload) => {
+                    const chartData = payload.chartData ?? payload;
+                    renderIncomeVsExpensesChart(chartData);
+                });
             });
-        }
+        })();
     </script>
 </div>
