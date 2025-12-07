@@ -1,8 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 42" {{ $attributes }}>
-    <path
-        fill="currentColor"
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="m6 16.5l-3 2.94V11h3m5 3.66l-1.57-1.34L8 14.64V7h3m5 6l-3 3V3h3m2.81 9.81L17 11h5v5l-1.79-1.79L13 21.36l-3.47-3.02L5.75 22H3l6.47-6.34L13 18.64"
-    />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" {{ $attributes }}>
+    <path stroke-linecap="round" d="M3 19.75h18" />
+    <rect x="4.5" y="10.5" width="3.75" height="8.75" rx="1.25" />
+    <rect x="10.125" y="7.25" width="3.75" height="12" rx="1.25" />
+    <rect x="15.75" y="4" width="3.75" height="15.25" rx="1.25" />
 </svg>
