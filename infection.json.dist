@@ -1,0 +1,20 @@
+{
+    "$schema": "https://getinfection.github.io/infection/infection-schema.json",
+    "source": {
+        "directories": [
+            "app"
+        ]
+    },
+    "phpUnit": {
+        "configDir": "."
+    },
+    "logs": {
+        "summary": "infection-summary.log",
+        "text": "infection.log",
+        "stryker": "infection-stryker-report.json"
+    },
+    "tmpDir": ".infection-temp",
+    "mutators": {
+        "@default": true
+    }
+}
