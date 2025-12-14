@@ -16,7 +16,7 @@ class TransactionReport
 
         $baseQuery = Transaction::forUser($userId)
             ->forCategory($categoryId)
-            ->with('category')
+            ->with(['category', 'occurrenceExceptions'])
             ->where(function ($query) use ($month, $year) {
                 $query->where(function ($sub) use ($month, $year) {
                     $sub->where('is_recurring', false)

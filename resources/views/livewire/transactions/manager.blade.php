@@ -110,7 +110,13 @@
                             <td class="px-3 py-2">{{ $transaction->description }}</td>
                             <td class="px-3 py-2 text-right space-x-2">
                                 <button type="button" wire:click="edit({{ $transaction->id }})" class="text-sm text-blue-600">Edit</button>
-                                <button type="button" wire:click="delete({{ $transaction->id }})" class="text-sm text-rose-600">Delete</button>
+                                <button
+                                    type="button"
+                                    wire:click="delete({{ $transaction->id }}, '{{ \Carbon\Carbon::parse($transaction->date)->toDateString() }}')"
+                                    class="text-sm text-rose-600"
+                                >
+                                    Delete
+                                </button>
                             </td>
                         </tr>
                     @empty
