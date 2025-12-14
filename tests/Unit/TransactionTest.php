@@ -130,11 +130,12 @@ class TransactionTest extends TestCase
         $transaction = Transaction::factory()
             ->for(User::factory())
             ->for(Category::factory())
+            ->recurring('weekly')
             ->create([
-                'is_recurring' => true,
-                'frequency' => 'fortnightly',
                 'date' => Carbon::create(2024, 2, 5),
             ]);
+
+        $transaction->setAttribute('frequency', 'fortnightly');
 
         $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
 
