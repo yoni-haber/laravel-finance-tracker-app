@@ -1,0 +1,25 @@
+name: php-security-check
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+  schedule:
+    - cron: '0 8 * * 1'
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP Security Audit
+        uses: symfonycorp/security-checker-action@v5
+        with:
+          lock: ./composer.lock
