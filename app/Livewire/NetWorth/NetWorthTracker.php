@@ -73,9 +73,19 @@ class NetWorthTracker extends Component
             }
         }
 
-        $entry = NetWorthEntry::updateOrCreate([
-            'id' => $this->entryId,
-        ], $data);
+        if ($this->entryId) {
+            $entry = NetWorthEntry::where('user_id', $data['user_id'])->find($this->entryId);
+
+            if (! $entry) {
+                $this->addError('save', 'Net worth entry not found.');
+
+                return;
+            }
+
+            $entry->update($data);
+        } else {
+            $entry = NetWorthEntry::create($data);
+        }
 
         $this->syncLineItems($entry, $validated['assetLines'], 'asset');
         $this->syncLineItems($entry, $validated['liabilityLines'], 'liability');

@@ -8,8 +8,8 @@ use App\Support\TransactionReport;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -17,28 +17,20 @@ use Livewire\Component;
 #[Title('Transactions')]
 class TransactionManager extends Component
 {
-    #[Rule('required|in:income,expense')]
     public string $type = 'expense';
 
-    #[Rule('required|numeric|min:0.01')]
     public string $amount = '0.00';
 
-    #[Rule('required|date')]
     public string $date;
 
-    #[Rule('nullable|string|max:500')]
     public ?string $description = null;
 
-    #[Rule('nullable|exists:categories,id')]
     public ?int $category_id = null;
 
-    #[Rule('boolean')]
     public bool $is_recurring = false;
 
-    #[Rule('nullable|required_if:is_recurring,true|in:weekly,monthly,yearly')]
     public ?string $frequency = null;
 
-    #[Rule('nullable|date|after_or_equal:date')]
     public ?string $recurring_until = null;
 
     public ?int $transactionId = null;
@@ -61,7 +53,7 @@ class TransactionManager extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
+        $data = $this->validate($this->rules());
         $data['user_id'] = Auth::id();
 
         if (! $data['is_recurring']) {
@@ -69,7 +61,20 @@ class TransactionManager extends Component
             $data['recurring_until'] = null;
         }
 
-        Transaction::updateOrCreate(['id' => $this->transactionId], $data);
+        if ($this->transactionId) {
+            $transaction = Transaction::where('user_id', $data['user_id'])
+                ->find($this->transactionId);
+
+            if (! $transaction) {
+                $this->addError('save', 'Transaction not found.');
+
+                return;
+            }
+
+            $transaction->update($data);
+        } else {
+            Transaction::create($data);
+        }
 
         $this->resetForm();
         session()->flash('status', 'Transaction saved successfully.');
@@ -147,5 +152,22 @@ class TransactionManager extends Component
 
         $this->resetValidation();
         $this->resetErrorBag();
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'type' => ['required', 'in:income,expense'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'date' => ['required', 'date'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'category_id' => [
+                'nullable',
+                Rule::exists('categories', 'id')->where('user_id', Auth::id()),
+            ],
+            'is_recurring' => ['boolean'],
+            'frequency' => ['nullable', 'required_if:is_recurring,true', 'in:weekly,monthly,yearly'],
+            'recurring_until' => ['nullable', 'date', 'after_or_equal:date'],
+        ];
     }
 }
