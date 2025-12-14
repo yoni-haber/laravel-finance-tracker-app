@@ -37,15 +37,11 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h4 class="font-semibold">Assets</h4>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Categorise your assets to track them over time.</p>
                         </div>
                     </div>
                     <div class="mt-4 space-y-3">
                         <div class="grid gap-3 sm:grid-cols-12 sm:items-center">
-                            <div class="sm:col-span-2">
-                                <button type="button" wire:click="addAssetLine" class="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Add</button>
-                            </div>
-                            <div class="sm:col-span-5">
+                            <div class="sm:col-span-6">
                                 <label class="sr-only">Asset Category</label>
                                 <input
                                     type="text"
@@ -55,7 +51,7 @@
                                 />
                                 @error('newAssetCategory') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
                             </div>
-                            <div class="sm:col-span-5">
+                            <div class="sm:col-span-4">
                                 <label class="sr-only">Asset Amount</label>
                                 <input
                                     type="number"
@@ -65,6 +61,9 @@
                                     class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
                                 />
                                 @error('newAssetAmount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="sm:col-span-2">
+                                <button type="button" wire:click="addAssetLine" class="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Add</button>
                             </div>
                         </div>
 
@@ -130,15 +129,11 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h4 class="font-semibold">Liabilities</h4>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Categorise liabilities so you can monitor repayments.</p>
                         </div>
                     </div>
                     <div class="mt-4 space-y-3">
                         <div class="grid gap-3 sm:grid-cols-12 sm:items-center">
-                            <div class="sm:col-span-2">
-                                <button type="button" wire:click="addLiabilityLine" class="w-full rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700">Add</button>
-                            </div>
-                            <div class="sm:col-span-5">
+                            <div class="sm:col-span-6">
                                 <label class="sr-only">Liability Category</label>
                                 <input
                                     type="text"
@@ -148,7 +143,7 @@
                                 />
                                 @error('newLiabilityCategory') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
                             </div>
-                            <div class="sm:col-span-5">
+                            <div class="sm:col-span-4">
                                 <label class="sr-only">Liability Amount</label>
                                 <input
                                     type="number"
@@ -158,6 +153,9 @@
                                     class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
                                 />
                                 @error('newLiabilityAmount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="sm:col-span-2">
+                                <button type="button" wire:click="addLiabilityLine" class="w-full rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700">Add</button>
                             </div>
                         </div>
 
@@ -221,7 +219,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <button type="submit" class="rounded-md bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">Save Entry</button>
+                <button type="submit" class="rounded-md bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">Save</button>
                 @if ($entryId)
                     <button type="button" wire:click="resetForm" class="rounded-md border border-zinc-300 px-4 py-2 text-sm">Cancel</button>
                 @endif
@@ -230,7 +228,7 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <h3 class="text-lg font-semibold">History</h3>
+        <h3 class="text-lg font-semibold">Net Worth History</h3>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">View your recorded net worth entries.</p>
 
         <div class="mt-4 overflow-x-auto">
