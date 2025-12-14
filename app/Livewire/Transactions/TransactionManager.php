@@ -5,6 +5,7 @@ namespace App\Livewire\Transactions;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Support\TransactionReport;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -79,9 +80,20 @@ class TransactionManager extends Component
         $this->frequency = $transaction->frequency;
     }
 
-    public function delete(int $transactionId): void
+    public function delete(int $transactionId, ?string $occurrenceDate = null): void
     {
-        Transaction::forUser(Auth::id())->where('id', $transactionId)->delete();
+        $transaction = Transaction::forUser(Auth::id())->findOrFail($transactionId);
+
+        if ($transaction->is_recurring && $occurrenceDate) {
+            $date = Carbon::parse($occurrenceDate)->toDateString();
+
+            $transaction->occurrenceExceptions()->firstOrCreate(['date' => $date]);
+            session()->flash('status', 'Transaction occurrence removed.');
+
+            return;
+        }
+
+        $transaction->delete();
         session()->flash('status', 'Transaction removed.');
     }
 

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 class Transaction extends Model
@@ -40,6 +41,11 @@ class Transaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function occurrenceExceptions(): HasMany
+    {
+        return $this->hasMany(TransactionException::class);
     }
 
     public function scopeForUser($query, int $userId)
@@ -82,11 +88,16 @@ class Transaction extends Model
             return collect();
         }
 
+        $skippedDates = $this->occurrenceExceptions
+            ->pluck('date')
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->toArray();
+
         $occurrences = collect();
         $current = $this->date->copy();
 
         while ($current <= $end) {
-            if ($current->between($start, $end)) {
+            if ($current->between($start, $end) && ! in_array($current->toDateString(), $skippedDates, true)) {
                 $occurrences->push($this->replicateForDate($current));
             }
 
