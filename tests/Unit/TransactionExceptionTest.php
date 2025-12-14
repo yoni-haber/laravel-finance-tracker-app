@@ -14,7 +14,7 @@ class TransactionExceptionTest extends TestCase
 
     public function test_casts_configures_date_as_date(): void
     {
-        $model = new TransactionException();
+        $model = new TransactionException;
 
         $this->assertSame('date', $model->getCasts()['date']);
     }
