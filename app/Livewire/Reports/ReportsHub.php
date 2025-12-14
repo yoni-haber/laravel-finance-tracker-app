@@ -22,8 +22,9 @@ class ReportsHub extends Component
 
     public function mount(): void
     {
-        $this->chartData = $this->chartDataForRange($this->range, Auth::id());
-        $this->netWorthChartData = $this->buildNetWorthChartData(Auth::id());
+        $userId = Auth::id();
+        $this->chartData = $this->chartDataForRange($this->range, $userId);
+        $this->netWorthChartData = $this->buildNetWorthChartData($userId);
     }
 
     public function render(): View
@@ -46,8 +47,16 @@ class ReportsHub extends Component
         $this->dispatch('reports-chart-data', chartData: $this->chartData);
     }
 
-    protected function chartDataForRange(string $range, int $userId): array
+    protected function chartDataForRange(string $range, ?int $userId): array
     {
+        if (! $userId) {
+            return [
+                'labels' => [],
+                'income' => [],
+                'expenses' => [],
+            ];
+        }
+
         $labels = [];
         $income = [];
         $expenses = [];
@@ -72,8 +81,15 @@ class ReportsHub extends Component
         return compact('labels', 'income', 'expenses');
     }
 
-    protected function buildNetWorthChartData(int $userId): array
+    protected function buildNetWorthChartData(?int $userId): array
     {
+        if (! $userId) {
+            return [
+                'labels' => [],
+                'netWorth' => [],
+            ];
+        }
+
         $entries = NetWorthEntry::where('user_id', $userId)
             ->where('date', '>=', now()->subMonths(12)->startOfDay())
             ->orderBy('date')

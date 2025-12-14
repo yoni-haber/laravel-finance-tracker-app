@@ -6,8 +6,8 @@ use App\Models\Budget;
 use App\Models\Category;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -15,16 +15,12 @@ use Livewire\Component;
 #[Title('Budgets')]
 class BudgetManager extends Component
 {
-    #[Rule('required|exists:categories,id')]
     public ?int $category_id = null;
 
-    #[Rule('required|integer|min:1|max:12')]
     public int $month;
 
-    #[Rule('required|integer|min:2000|max:2100')]
     public int $year;
 
-    #[Rule('required|numeric|min:0')]
     public string $amount = '0.00';
 
     public ?int $budgetId = null;
@@ -46,7 +42,7 @@ class BudgetManager extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
+        $data = $this->validate($this->rules());
         $data['user_id'] = Auth::id();
 
         if ($this->budgetExists($data)) {
@@ -55,9 +51,19 @@ class BudgetManager extends Component
             return;
         }
 
-        Budget::updateOrCreate([
-            'id' => $this->budgetId,
-        ], $data);
+        if ($this->budgetId) {
+            $budget = Budget::where('user_id', $data['user_id'])->find($this->budgetId);
+
+            if (! $budget) {
+                $this->addError('save', 'Budget not found.');
+
+                return;
+            }
+
+            $budget->update($data);
+        } else {
+            Budget::create($data);
+        }
 
         $this->resetForm();
         session()->flash('status', 'Budget saved.');
@@ -116,5 +122,18 @@ class BudgetManager extends Component
             ->where('year', $data['year'])
             ->when($this->budgetId, fn ($query) => $query->where('id', '!=', $this->budgetId))
             ->exists();
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'category_id' => [
+                'required',
+                Rule::exists('categories', 'id')->where('user_id', Auth::id()),
+            ],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'amount' => ['required', 'numeric', 'min:0'],
+        ];
     }
 }
