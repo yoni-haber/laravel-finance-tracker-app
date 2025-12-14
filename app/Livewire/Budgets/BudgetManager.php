@@ -47,7 +47,7 @@ class BudgetManager extends Component
         $data['user_id'] = Auth::id();
 
         if ($this->budgetExists($data)) {
-            $this->addError('category_id', 'A budget for this category, month, and year already exists.');
+            $this->addError('save', 'A budget for this category, month, and year already exists.');
 
             return;
         }
