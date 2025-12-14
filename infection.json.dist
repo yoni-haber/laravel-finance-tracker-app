@@ -12,7 +12,8 @@
         "summary": "infection-summary.log",
         "text": "infection.log",
         "stryker": {
-            "file": "infection-stryker-report.json"
+            "report": "infection-stryker-report.json",
+            "badge": "infection-stryker-badge.svg"
         }
     },
     "tmpDir": ".infection-temp",
