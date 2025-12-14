@@ -21,6 +21,7 @@ class Transaction extends Model
         'date',
         'is_recurring',
         'frequency',
+        'recurring_until',
         'description',
     ];
 
@@ -30,6 +31,7 @@ class Transaction extends Model
             'amount' => 'decimal:2',
             'date' => 'date',
             'is_recurring' => 'boolean',
+            'recurring_until' => 'date',
         ];
     }
 
@@ -77,6 +79,8 @@ class Transaction extends Model
     {
         $start = Carbon::create($year, $month, 1);
         $end = $start->copy()->endOfMonth();
+        $recurringEnd = $this->recurring_until ? Carbon::parse($this->recurring_until)->endOfDay() : null;
+        $cycleEnd = $recurringEnd && $recurringEnd < $end ? $recurringEnd : $end;
 
         if (! $this->is_recurring) {
             return ($this->date->between($start, $end))
@@ -88,6 +92,14 @@ class Transaction extends Model
             return collect();
         }
 
+        if ($recurringEnd && $start->greaterThan($recurringEnd)) {
+            return collect();
+        }
+
+        if ($recurringEnd && $this->date->greaterThan($recurringEnd)) {
+            return collect();
+        }
+
         $skippedDates = $this->occurrenceExceptions
             ->pluck('date')
             ->map(fn ($date) => Carbon::parse($date)->toDateString())
@@ -96,7 +108,7 @@ class Transaction extends Model
         $occurrences = collect();
         $current = $this->date->copy();
 
-        while ($current <= $end) {
+        while ($current <= $cycleEnd) {
             if ($current->between($start, $end) && ! in_array($current->toDateString(), $skippedDates, true)) {
                 $occurrences->push($this->replicateForDate($current));
             }

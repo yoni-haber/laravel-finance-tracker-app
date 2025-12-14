@@ -38,6 +38,9 @@ class TransactionManager extends Component
     #[Rule('nullable|required_if:is_recurring,true|in:weekly,monthly,yearly')]
     public ?string $frequency = null;
 
+    #[Rule('nullable|date|after_or_equal:date')]
+    public ?string $recurring_until = null;
+
     public ?int $transactionId = null;
     public int $month;
     public int $year;
@@ -59,6 +62,7 @@ class TransactionManager extends Component
 
         if (! $data['is_recurring']) {
             $data['frequency'] = null;
+            $data['recurring_until'] = null;
         }
 
         Transaction::updateOrCreate(['id' => $this->transactionId], $data);
@@ -78,6 +82,7 @@ class TransactionManager extends Component
         $this->category_id = $transaction->category_id;
         $this->is_recurring = $transaction->is_recurring;
         $this->frequency = $transaction->frequency;
+        $this->recurring_until = $transaction->recurring_until?->toDateString();
     }
 
     public function delete(int $transactionId, ?string $occurrenceDate = null): void
@@ -101,6 +106,7 @@ class TransactionManager extends Component
     {
         if (! $value) {
             $this->frequency = null;
+            $this->recurring_until = null;
             return;
         }
 
@@ -132,6 +138,7 @@ class TransactionManager extends Component
         $this->category_id = null;
         $this->is_recurring = false;
         $this->frequency = null;
+        $this->recurring_until = null;
 
         $this->resetValidation();
         $this->resetErrorBag();

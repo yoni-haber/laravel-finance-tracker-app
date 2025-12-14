@@ -47,6 +47,19 @@
                     <option value="yearly">Yearly</option>
                 </select>
             </div>
+            @if ($is_recurring)
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Recurring until (optional)</label>
+                    <input
+                        type="date"
+                        wire:model="recurring_until"
+                        class="mt-2 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700"
+                        @disabled(! $is_recurring)
+                    />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Set an end date before creating a new recurring amount to keep historical totals intact.</p>
+                    @error('recurring_until') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                </div>
+            @endif
             <div class="md:col-span-2 lg:col-span-3 flex items-center gap-3">
                 <button type="submit" class="rounded-md bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">Save</button>
                 @if ($transactionId)
