@@ -46,6 +46,12 @@ class BudgetManager extends Component
         $data = $this->validate();
         $data['user_id'] = Auth::id();
 
+        if ($this->budgetExists($data)) {
+            $this->addError('save', 'A budget for this category, month, and year already exists.');
+
+            return;
+        }
+
         Budget::updateOrCreate([
             'id' => $this->budgetId,
         ], $data);
@@ -97,5 +103,15 @@ class BudgetManager extends Component
 
         $this->resetValidation();
         $this->resetErrorBag();
+    }
+
+    private function budgetExists(array $data): bool
+    {
+        return Budget::where('user_id', $data['user_id'])
+            ->where('category_id', $data['category_id'])
+            ->where('month', $data['month'])
+            ->where('year', $data['year'])
+            ->when($this->budgetId, fn ($query) => $query->where('id', '!=', $this->budgetId))
+            ->exists();
     }
 }

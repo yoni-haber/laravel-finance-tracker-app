@@ -36,6 +36,9 @@
                 @if ($budgetId)
                     <button type="button" wire:click="resetForm" class="rounded-md border border-zinc-300 px-4 py-2 text-sm">Cancel</button>
                 @endif
+                @error('save')
+                    <p class="text-sm text-rose-600">{{ $message }}</p>
+                @enderror
                 @if (session()->has('status'))
                     <p class="text-sm text-emerald-600">{{ session('status') }}</p>
                 @endif
