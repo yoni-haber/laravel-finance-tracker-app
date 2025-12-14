@@ -42,14 +42,16 @@ class TransactionTest extends TestCase
         $this->assertTrue(Transaction::income()->get()->contains($februaryIncome));
         $this->assertTrue(Transaction::expense()->get()->contains($januaryExpense));
 
+        $this->assertCount(2, Transaction::forMonthYear(1, 2024)->get());
+
         $this->assertCount(
             1,
-            Transaction::forMonthYear(1, 2024)->forCategory($food->id)->get()
+            Transaction::forUser($user->id)->forMonthYear(1, 2024)->forCategory($food->id)->get()
         );
 
         $this->assertCount(
-            2,
-            Transaction::forMonthYear(1, 2024)->forCategory(null)->get()
+            1,
+            Transaction::forUser($user->id)->forMonthYear(1, 2024)->forCategory(null)->get()
         );
     }
 
