@@ -54,9 +54,12 @@ class CategoryManager extends Component
         ]);
     }
 
-    protected function resetForm(): void
+    public function resetForm(): void
     {
         $this->categoryId = null;
         $this->name = '';
+
+        $this->resetValidation();
+        $this->resetErrorBag();
     }
 }

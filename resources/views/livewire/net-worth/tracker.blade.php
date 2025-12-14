@@ -62,8 +62,8 @@
                                 />
                                 @error('newAssetAmount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
                             </div>
-                            <div class="sm:col-span-2">
-                                <button type="button" wire:click="addAssetLine" class="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Add</button>
+                            <div class="sm:col-span-2 flex justify-start">
+                                <button type="button" wire:click="addAssetLine" class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Add</button>
                             </div>
                         </div>
 
@@ -154,8 +154,8 @@
                                 />
                                 @error('newLiabilityAmount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
                             </div>
-                            <div class="sm:col-span-2">
-                                <button type="button" wire:click="addLiabilityLine" class="w-full rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700">Add</button>
+                            <div class="sm:col-span-2  flex justify-start">
+                                <button type="button" wire:click="addLiabilityLine" class="rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700">Add</button>
                             </div>
                         </div>
 

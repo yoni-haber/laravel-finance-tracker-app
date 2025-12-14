@@ -1,6 +1,6 @@
 <div class="space-y-6">
     <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <h3 class="text-lg font-semibold mb-4">Budget</h3>
+        <h3 class="text-lg font-semibold mb-4">Add / Edit Budget</h3>
         <form wire:submit.prevent="save" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Category</label>
@@ -45,7 +45,7 @@
 
     <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div class="flex flex-wrap items-center justify-between gap-4">
-            <h3 class="text-lg font-semibold">Defined budgets</h3>
+            <h3 class="text-lg font-semibold">Budgets</h3>
             <div class="flex gap-2 text-sm">
                 <select wire:model.live="filterMonth" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
                     @foreach (range(1, 12) as $m)

@@ -111,7 +111,7 @@ class TransactionManager extends Component
         ]);
     }
 
-    protected function resetForm(): void
+    public function resetForm(): void
     {
         $this->transactionId = null;
         $this->type = 'expense';
@@ -120,5 +120,8 @@ class TransactionManager extends Component
         $this->category_id = null;
         $this->is_recurring = false;
         $this->frequency = null;
+
+        $this->resetValidation();
+        $this->resetErrorBag();
     }
 }
