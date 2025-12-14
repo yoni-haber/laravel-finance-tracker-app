@@ -13,6 +13,11 @@ class MoneyTest extends TestCase
         $this->assertSame(999, Money::normalize(9.99));
     }
 
+    public function test_normalize_defaults_to_zero(): void
+    {
+        $this->assertSame(0, Money::normalize());
+    }
+
     public function test_from_pennies_formats_decimal_string(): void
     {
         $this->assertSame('12.34', Money::fromPennies(1234));

@@ -4,7 +4,7 @@ namespace App\Support;
 
 class Money
 {
-    public static function normalize(string|int|float $amount): int
+    public static function normalize(string|int|float $amount = 0): int
     {
         return (int) round(((float) $amount) * 100);
     }
