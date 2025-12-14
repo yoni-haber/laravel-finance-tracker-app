@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Budget;
+use App\Models\User;
 use App\Support\Money;
 use App\Support\TransactionReport;
 use Illuminate\Contracts\View\View;
@@ -30,7 +31,19 @@ class Dashboard extends Component
 
     public function render(): View
     {
-        $userId = Auth::id();
+        $userId = Auth::id() ?? User::query()->value('id');
+
+        if (! $userId) {
+            return view('livewire.dashboard', [
+                'income' => 0,
+                'expenses' => 0,
+                'net' => 0,
+                'budgetSummaries' => collect(),
+                'incomeCategoryBreakdown' => collect(),
+                'expenseCategoryBreakdown' => collect(),
+                'schemaMissing' => true,
+            ]);
+        }
 
         if (! $this->schemaReady()) {
             return view('livewire.dashboard', [
