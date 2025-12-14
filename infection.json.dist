@@ -11,7 +11,9 @@
     "logs": {
         "summary": "infection-summary.log",
         "text": "infection.log",
-        "stryker": "infection-stryker-report.json"
+        "stryker": {
+            "file": "infection-stryker-report.json"
+        }
     },
     "tmpDir": ".infection-temp",
     "mutators": {
