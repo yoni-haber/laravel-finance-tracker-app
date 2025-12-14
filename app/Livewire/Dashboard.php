@@ -45,8 +45,16 @@ class Dashboard extends Component
         }
 
         $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year);
-        $income = $transactions->where('type', 'income')->sum('amount');
-        $expenses = $transactions->where('type', 'expense')->sum('amount');
+
+        $incomePennies = Money::normalize(
+            $transactions->where('type', 'income')->sum('amount')
+        );
+        $expensePennies = Money::normalize(
+            $transactions->where('type', 'expense')->sum('amount')
+        );
+
+        $income = Money::fromPennies($incomePennies);
+        $expenses = Money::fromPennies($expensePennies);
         $net = Money::subtract($income, $expenses);
 
         $budgets = Budget::with('category')
@@ -56,19 +64,20 @@ class Dashboard extends Component
             ->get();
 
         $budgetSummaries = $budgets->map(function (Budget $budget) use ($transactions) {
-            $actual = $transactions
-                ->where('category_id', $budget->category_id)
-                ->where('type', 'expense')
-                ->sum('amount');
-
-            $remaining = Money::subtract($budget->amount, $actual);
+            $budgetPennies = Money::normalize($budget->amount);
+            $actualPennies = Money::normalize(
+                $transactions
+                    ->where('category_id', $budget->category_id)
+                    ->where('type', 'expense')
+                    ->sum('amount')
+            );
 
             return [
                 'category' => $budget->category->name,
-                'budget' => $budget->amount,
-                'actual' => $actual,
-                'remaining' => $remaining,
-                'overspent' => $actual > $budget->amount,
+                'budget' => Money::fromPennies($budgetPennies),
+                'actual' => Money::fromPennies($actualPennies),
+                'remaining' => Money::fromPennies($budgetPennies - $actualPennies),
+                'overspent' => $actualPennies > $budgetPennies,
             ];
         });
 
@@ -105,7 +114,9 @@ class Dashboard extends Component
             ->groupBy('category.name')
             ->map(fn ($items, $category) => [
                 'category' => $category ?? 'Uncategorised',
-                'total' => $items->sum('amount'),
+                'total' => Money::fromPennies(
+                    Money::normalize($items->sum('amount'))
+                ),
             ])->values();
     }
 }
