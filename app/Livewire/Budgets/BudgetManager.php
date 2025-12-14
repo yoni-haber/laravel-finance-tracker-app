@@ -28,8 +28,11 @@ class BudgetManager extends Component
     public string $amount = '0.00';
 
     public ?int $budgetId = null;
+
     public ?int $filterCategory = null;
+
     public int $filterMonth;
+
     public int $filterYear;
 
     public function mount(): void
