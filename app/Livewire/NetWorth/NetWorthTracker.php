@@ -138,6 +138,18 @@ class NetWorthTracker extends Component
         return number_format($this->assetTotal() - $this->liabilityTotal(), 2);
     }
 
+    public function getCalculatedNetWorthValueProperty(): float
+    {
+        return $this->assetTotal() - $this->liabilityTotal();
+    }
+
+    public function getCalculatedNetWorthStyleProperty(): string
+    {
+        return $this->calculatedNetWorthValue >= 0
+            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+            : 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300';
+    }
+
     public function resetForm(): void
     {
         $this->entryId = null;
