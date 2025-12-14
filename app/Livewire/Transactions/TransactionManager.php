@@ -69,7 +69,10 @@ class TransactionManager extends Component
             $data['recurring_until'] = null;
         }
 
-        Transaction::updateOrCreate(['id' => $this->transactionId], $data);
+        Transaction::updateOrCreate([
+            'id' => $this->transactionId,
+            'user_id' => Auth::id(),
+        ], $data);
 
         $this->resetForm();
         session()->flash('status', 'Transaction saved successfully.');

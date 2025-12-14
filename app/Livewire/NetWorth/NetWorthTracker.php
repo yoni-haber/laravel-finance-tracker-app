@@ -75,6 +75,7 @@ class NetWorthTracker extends Component
 
         $entry = NetWorthEntry::updateOrCreate([
             'id' => $this->entryId,
+            'user_id' => Auth::id(),
         ], $data);
 
         $this->syncLineItems($entry, $validated['assetLines'], 'asset');

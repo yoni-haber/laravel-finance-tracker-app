@@ -24,7 +24,10 @@ class CategoryManager extends Component
         $data = $this->validate();
         $data['user_id'] = Auth::id();
 
-        Category::updateOrCreate(['id' => $this->categoryId], $data);
+        Category::updateOrCreate([
+            'id' => $this->categoryId,
+            'user_id' => Auth::id(),
+        ], $data);
 
         $this->resetForm();
         session()->flash('status', 'Category saved.');

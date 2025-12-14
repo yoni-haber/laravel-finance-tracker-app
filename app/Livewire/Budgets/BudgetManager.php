@@ -57,6 +57,7 @@ class BudgetManager extends Component
 
         Budget::updateOrCreate([
             'id' => $this->budgetId,
+            'user_id' => Auth::id(),
         ], $data);
 
         $this->resetForm();
