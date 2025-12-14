@@ -138,7 +138,7 @@ class NetWorthTracker extends Component
         return number_format($this->assetTotal() - $this->liabilityTotal(), 2);
     }
 
-    protected function resetForm(): void
+    public function resetForm(): void
     {
         $this->entryId = null;
         $this->assetLines = [];
@@ -150,6 +150,9 @@ class NetWorthTracker extends Component
         $this->editingAssetIndex = null;
         $this->editingLiabilityIndex = null;
         $this->date = now()->toDateString();
+
+        $this->resetValidation();
+        $this->resetErrorBag();
     }
 
     protected function rules(): array
