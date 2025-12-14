@@ -19,6 +19,8 @@ jobs:
     environment: Testing
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -35,3 +37,16 @@ jobs:
 
       - name: Run Pint
         run: vendor/bin/pint
+
+      - name: Commit and Push Lint Fixes
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: apply lint fixes"
+            git push
+          else
+            echo "No lint changes to commit."
+          fi
