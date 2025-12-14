@@ -126,7 +126,7 @@ class Dashboard extends Component
             ->where('type', $type)
             ->groupBy('category.name')
             ->map(fn ($items, $category) => [
-                'category' => $category ?? 'Uncategorised',
+                'category' => $category ?: 'Uncategorised',
                 'total' => Money::fromPennies(
                     Money::normalize($items->sum('amount'))
                 ),
