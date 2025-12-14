@@ -67,4 +67,24 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public function categories(): HasMany
+    {
+        return $this->hasMany(Category::class);
+    }
+
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    public function netWorthEntries(): HasMany
+    {
+        return $this->hasMany(NetWorthEntry::class);
+    }
+
+    public function netWorthLineItems(): HasMany
+    {
+        return $this->hasMany(NetWorthLineItem::class);
+    }
 }
