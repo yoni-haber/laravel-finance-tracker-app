@@ -125,6 +125,23 @@ class TransactionTest extends TestCase
         $this->assertTrue($occurrences->isEmpty());
     }
 
+    public function test_recurring_with_invalid_frequency_stops_iteration_after_first_occurrence(): void
+    {
+        $transaction = Transaction::factory()
+            ->for(User::factory())
+            ->for(Category::factory())
+            ->create([
+                'is_recurring' => true,
+                'frequency' => 'fortnightly',
+                'date' => Carbon::create(2024, 2, 5),
+            ]);
+
+        $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
+
+        $this->assertCount(1, $occurrences);
+        $this->assertEquals('2024-02-05', $occurrences->first()->date->toDateString());
+    }
+
     public function test_recurring_end_before_month_returns_empty(): void
     {
         $transaction = Transaction::factory()
@@ -134,6 +151,22 @@ class TransactionTest extends TestCase
             ->create([
                 'date' => Carbon::create(2024, 1, 1),
                 'recurring_until' => Carbon::create(2024, 1, 20),
+            ]);
+
+        $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
+
+        $this->assertTrue($occurrences->isEmpty());
+    }
+
+    public function test_recurring_start_after_recurring_end_returns_empty(): void
+    {
+        $transaction = Transaction::factory()
+            ->for(User::factory())
+            ->for(Category::factory())
+            ->recurring('monthly')
+            ->create([
+                'date' => Carbon::create(2024, 3, 1),
+                'recurring_until' => Carbon::create(2024, 2, 1),
             ]);
 
         $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
