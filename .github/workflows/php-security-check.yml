@@ -20,6 +20,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: PHP Security Audit
-        uses: symfonycorp/security-checker-action@v6
+        uses: symfonycorp/security-checker-action@v5
         with:
           lock: ./composer.lock

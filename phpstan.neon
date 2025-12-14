@@ -1,0 +1,12 @@
+parameters:
+    level: 0
+    paths:
+        - app
+        - bootstrap
+        - config
+        - database
+        - tests
+    excludePaths:
+        - routes/console.php
+    ignoreErrors:
+        - '#Undefined variable: \$this#'
