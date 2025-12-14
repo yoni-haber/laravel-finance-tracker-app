@@ -36,7 +36,15 @@ class CategoryTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
-        Budget::factory()->count(2)->for($user)->for($category)->create();
+        Budget::factory()
+            ->count(2)
+            ->state(new \Illuminate\Database\Eloquent\Factories\Sequence(
+                ['month' => 1, 'year' => 2025],
+                ['month' => 2, 'year' => 2025],
+            ))
+            ->for($user)
+            ->for($category)
+            ->create();
 
         $this->assertCount(2, $category->budgets);
         $this->assertTrue($category->budgets->every(fn ($budget) => $budget->category->is($category)));
