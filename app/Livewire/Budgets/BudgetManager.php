@@ -89,10 +89,13 @@ class BudgetManager extends Component
         ]);
     }
 
-    protected function resetForm(): void
+    public function resetForm(): void
     {
         $this->budgetId = null;
         $this->category_id = null;
         $this->amount = '0.00';
+
+        $this->resetValidation();
+        $this->resetErrorBag();
     }
 }
