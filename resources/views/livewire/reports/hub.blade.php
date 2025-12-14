@@ -26,23 +26,40 @@
         ></canvas>
     </div>
 
+    <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h3 class="text-lg font-semibold">Net Worth Over Time</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track how your overall financial position changes.</p>
+            </div>
+        </div>
+
+        <canvas
+            id="netWorthChart"
+            wire:ignore
+            data-chart-data='@json($netWorthChartData)'
+            class="mt-6"
+        ></canvas>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         (() => {
             if (window.incomeVsExpensesChartInitialized) return;
             window.incomeVsExpensesChartInitialized = true;
 
-            let chartInstance;
+            let incomeExpenseChartInstance;
+            let netWorthChartInstance;
 
             const renderIncomeVsExpensesChart = (chartData) => {
                 const chartElement = document.getElementById('incomeVsExpensesChart');
                 if (!chartElement) return;
 
-                if (chartInstance) {
-                    chartInstance.destroy();
+                if (incomeExpenseChartInstance) {
+                    incomeExpenseChartInstance.destroy();
                 }
 
-                chartInstance = new Chart(chartElement, {
+                incomeExpenseChartInstance = new Chart(chartElement, {
                     type: 'line',
                     data: {
                         labels: chartData.labels,
@@ -90,17 +107,72 @@
                 });
             };
 
-            const hydrateFromElement = () => {
-                const chartElement = document.getElementById('incomeVsExpensesChart');
+            const renderNetWorthChart = (chartData) => {
+                const chartElement = document.getElementById('netWorthChart');
                 if (!chartElement) return;
 
-                const data = chartElement.dataset.chartData;
-                if (!data) return;
+                if (netWorthChartInstance) {
+                    netWorthChartInstance.destroy();
+                }
 
-                try {
-                    renderIncomeVsExpensesChart(JSON.parse(data));
-                } catch (error) {
-                    console.error('Unable to parse chart data', error);
+                netWorthChartInstance = new Chart(chartElement, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [
+                            {
+                                label: 'Net Worth',
+                                data: chartData.netWorth,
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                                tension: 0.3,
+                                fill: true,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: (value) => `£${value}`,
+                                },
+                            },
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    usePointStyle: true,
+                                },
+                            },
+                        },
+                    },
+                });
+            };
+
+            const hydrateFromElement = () => {
+                const chartElement = document.getElementById('incomeVsExpensesChart');
+                const netWorthElement = document.getElementById('netWorthChart');
+
+                if (chartElement?.dataset.chartData) {
+                    try {
+                        renderIncomeVsExpensesChart(JSON.parse(chartElement.dataset.chartData));
+                    } catch (error) {
+                        console.error('Unable to parse chart data', error);
+                    }
+                }
+
+                if (netWorthElement?.dataset.chartData) {
+                    try {
+                        renderNetWorthChart(JSON.parse(netWorthElement.dataset.chartData));
+                    } catch (error) {
+                        console.error('Unable to parse net worth chart data', error);
+                    }
                 }
             };
 
