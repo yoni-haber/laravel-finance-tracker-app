@@ -42,9 +42,13 @@ class TransactionManager extends Component
     public ?string $recurring_until = null;
 
     public ?int $transactionId = null;
+
     public int $month;
+
     public int $year;
+
     public ?int $filterCategory = null;
+
     public ?string $filterType = null;
 
     public function mount(): void
@@ -107,6 +111,7 @@ class TransactionManager extends Component
         if (! $value) {
             $this->frequency = null;
             $this->recurring_until = null;
+
             return;
         }
 

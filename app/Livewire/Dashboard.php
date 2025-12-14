@@ -6,9 +6,9 @@ use App\Models\Budget;
 use App\Support\Money;
 use App\Support\TransactionReport;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -18,7 +18,9 @@ use Livewire\Component;
 class Dashboard extends Component
 {
     public int $month;
+
     public int $year;
+
     public function mount(): void
     {
         $now = now();
