@@ -15,13 +15,21 @@ class NetWorthTracker extends Component
 {
     public string $date;
 
-    public array $assetLines = [
-        ['category' => '', 'amount' => '0.00'],
-    ];
+    public array $assetLines = [];
 
-    public array $liabilityLines = [
-        ['category' => '', 'amount' => '0.00'],
-    ];
+    public array $liabilityLines = [];
+
+    public string $newAssetCategory = '';
+
+    public string $newAssetAmount = '0.00';
+
+    public string $newLiabilityCategory = '';
+
+    public string $newLiabilityAmount = '0.00';
+
+    public ?int $editingAssetIndex = null;
+
+    public ?int $editingLiabilityIndex = null;
 
     public ?int $entryId = null;
 
@@ -133,8 +141,14 @@ class NetWorthTracker extends Component
     protected function resetForm(): void
     {
         $this->entryId = null;
-        $this->assetLines = [['category' => '', 'amount' => '0.00']];
-        $this->liabilityLines = [['category' => '', 'amount' => '0.00']];
+        $this->assetLines = [];
+        $this->liabilityLines = [];
+        $this->newAssetCategory = '';
+        $this->newAssetAmount = '0.00';
+        $this->newLiabilityCategory = '';
+        $this->newLiabilityAmount = '0.00';
+        $this->editingAssetIndex = null;
+        $this->editingLiabilityIndex = null;
         $this->date = now()->toDateString();
     }
 
@@ -148,7 +162,7 @@ class NetWorthTracker extends Component
     protected function lineItemRules(string $property): array
     {
         return [
-            "$property" => 'required|array|min:1',
+            "$property" => 'required|array|min:0',
             "$property.*.category" => 'required|string|max:255',
             "$property.*.amount" => 'required|numeric|min:0',
         ];
@@ -190,23 +204,89 @@ class NetWorthTracker extends Component
 
     public function addAssetLine(): void
     {
-        $this->assetLines[] = ['category' => '', 'amount' => '0.00'];
+        $this->resetErrorBag(['newAssetCategory', 'newAssetAmount']);
+
+        if (trim($this->newAssetCategory) === '') {
+            $this->addError('newAssetCategory', 'Asset category is required.');
+
+            return;
+        }
+
+        $this->assetLines[] = [
+            'category' => trim($this->newAssetCategory),
+            'amount' => number_format((float) $this->newAssetAmount, 2, '.', ''),
+        ];
+
+        $this->newAssetCategory = '';
+        $this->newAssetAmount = '0.00';
     }
 
     public function addLiabilityLine(): void
     {
-        $this->liabilityLines[] = ['category' => '', 'amount' => '0.00'];
+        $this->resetErrorBag(['newLiabilityCategory', 'newLiabilityAmount']);
+
+        if (trim($this->newLiabilityCategory) === '') {
+            $this->addError('newLiabilityCategory', 'Liability category is required.');
+
+            return;
+        }
+
+        $this->liabilityLines[] = [
+            'category' => trim($this->newLiabilityCategory),
+            'amount' => number_format((float) $this->newLiabilityAmount, 2, '.', ''),
+        ];
+
+        $this->newLiabilityCategory = '';
+        $this->newLiabilityAmount = '0.00';
     }
 
     public function removeAssetLine(int $index): void
     {
         unset($this->assetLines[$index]);
         $this->assetLines = array_values($this->assetLines);
+        $this->editingAssetIndex = null;
     }
 
     public function removeLiabilityLine(int $index): void
     {
         unset($this->liabilityLines[$index]);
         $this->liabilityLines = array_values($this->liabilityLines);
+        $this->editingLiabilityIndex = null;
+    }
+
+    public function editAssetLine(int $index): void
+    {
+        $this->editingAssetIndex = $index;
+    }
+
+    public function saveAssetLine(int $index): void
+    {
+        $this->formatLineAmount('assetLines', $index);
+        $this->editingAssetIndex = null;
+    }
+
+    public function editLiabilityLine(int $index): void
+    {
+        $this->editingLiabilityIndex = $index;
+    }
+
+    public function saveLiabilityLine(int $index): void
+    {
+        $this->formatLineAmount('liabilityLines', $index);
+        $this->editingLiabilityIndex = null;
+    }
+
+    protected function formatLineAmount(string $property, int $index): void
+    {
+        if (! isset($this->{$property}[$index])) {
+            return;
+        }
+
+        $this->{$property}[$index]['amount'] = number_format(
+            (float) $this->{$property}[$index]['amount'],
+            2,
+            '.',
+            ''
+        );
     }
 }

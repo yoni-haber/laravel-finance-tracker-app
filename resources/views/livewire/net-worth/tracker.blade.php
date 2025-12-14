@@ -39,39 +39,90 @@
                             <h4 class="font-semibold">Assets</h4>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Categorise your assets to track them over time.</p>
                         </div>
-                        <button type="button" wire:click="addAssetLine" class="text-sm font-semibold text-emerald-700 hover:text-emerald-800 dark:text-emerald-300">+ Add</button>
                     </div>
                     <div class="mt-4 space-y-3">
-                        @foreach ($assetLines as $index => $asset)
-                            <div class="grid grid-cols-12 gap-3 items-center">
-                                <div class="col-span-7">
-                                    <label class="sr-only">Asset Category</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Cash, Investments"
-                                        wire:model="assetLines.{{ $index }}.category"
-                                        class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
-                                    />
-                                    @error('assetLines.' . $index . '.category') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
-                                </div>
-                                <div class="col-span-4">
-                                    <label class="sr-only">Asset Amount</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        wire:model="assetLines.{{ $index }}.amount"
-                                        class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
-                                    />
-                                    @error('assetLines.' . $index . '.amount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
-                                </div>
-                                <div class="col-span-1 text-right">
-                                    @if (count($assetLines) > 1)
-                                        <button type="button" wire:click="removeAssetLine({{ $index }})" class="text-sm text-rose-600">&times;</button>
-                                    @endif
-                                </div>
+                        <div class="grid gap-3 sm:grid-cols-12 sm:items-center">
+                            <div class="sm:col-span-6">
+                                <label class="sr-only">Asset Category</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Cash, Investments"
+                                    wire:model="newAssetCategory"
+                                    class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
+                                />
+                                @error('newAssetCategory') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
                             </div>
-                        @endforeach
+                            <div class="sm:col-span-4">
+                                <label class="sr-only">Asset Amount</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    wire:model="newAssetAmount"
+                                    class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
+                                />
+                                @error('newAssetAmount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="sm:col-span-2 sm:text-right">
+                                <button type="button" wire:click="addAssetLine" class="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Add</button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-700">
+                                <thead class="bg-zinc-50 dark:bg-zinc-900">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left font-semibold">Category</th>
+                                        <th class="px-3 py-2 text-left font-semibold">Amount</th>
+                                        <th class="px-3 py-2 text-right font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                                    @forelse ($assetLines as $index => $asset)
+                                        <tr>
+                                            <td class="px-3 py-2 align-top">
+                                                @if ($editingAssetIndex === $index)
+                                                    <input
+                                                        type="text"
+                                                        wire:model="assetLines.{{ $index }}.category"
+                                                        class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
+                                                    />
+                                                    @error('assetLines.' . $index . '.category') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                                                @else
+                                                    <span class="text-gray-800 dark:text-gray-100">{{ $asset['category'] }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-2 align-top">
+                                                @if ($editingAssetIndex === $index)
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        wire:model="assetLines.{{ $index }}.amount"
+                                                        class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
+                                                    />
+                                                    @error('assetLines.' . $index . '.amount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                                                @else
+                                                    <span class="font-medium">£{{ number_format((float) $asset['amount'], 2) }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-2 text-right space-x-2">
+                                                @if ($editingAssetIndex === $index)
+                                                    <button type="button" wire:click="saveAssetLine({{ $index }})" class="text-sm text-emerald-600">Save</button>
+                                                @else
+                                                    <button type="button" wire:click="editAssetLine({{ $index }})" class="text-sm text-blue-600">Edit</button>
+                                                @endif
+                                                <button type="button" wire:click="removeAssetLine({{ $index }})" class="text-sm text-rose-600">Delete</button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="px-3 py-3 text-center text-gray-500">No assets added yet.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -81,39 +132,90 @@
                             <h4 class="font-semibold">Liabilities</h4>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Categorise liabilities so you can monitor repayments.</p>
                         </div>
-                        <button type="button" wire:click="addLiabilityLine" class="text-sm font-semibold text-rose-700 hover:text-rose-800 dark:text-rose-300">+ Add</button>
                     </div>
                     <div class="mt-4 space-y-3">
-                        @foreach ($liabilityLines as $index => $liability)
-                            <div class="grid grid-cols-12 gap-3 items-center">
-                                <div class="col-span-7">
-                                    <label class="sr-only">Liability Category</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Mortgage, Credit Card"
-                                        wire:model="liabilityLines.{{ $index }}.category"
-                                        class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
-                                    />
-                                    @error('liabilityLines.' . $index . '.category') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
-                                </div>
-                                <div class="col-span-4">
-                                    <label class="sr-only">Liability Amount</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        wire:model="liabilityLines.{{ $index }}.amount"
-                                        class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
-                                    />
-                                    @error('liabilityLines.' . $index . '.amount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
-                                </div>
-                                <div class="col-span-1 text-right">
-                                    @if (count($liabilityLines) > 1)
-                                        <button type="button" wire:click="removeLiabilityLine({{ $index }})" class="text-sm text-rose-600">&times;</button>
-                                    @endif
-                                </div>
+                        <div class="grid gap-3 sm:grid-cols-12 sm:items-center">
+                            <div class="sm:col-span-6">
+                                <label class="sr-only">Liability Category</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Mortgage, Credit Card"
+                                    wire:model="newLiabilityCategory"
+                                    class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
+                                />
+                                @error('newLiabilityCategory') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
                             </div>
-                        @endforeach
+                            <div class="sm:col-span-4">
+                                <label class="sr-only">Liability Amount</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    wire:model="newLiabilityAmount"
+                                    class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
+                                />
+                                @error('newLiabilityAmount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="sm:col-span-2 sm:text-right">
+                                <button type="button" wire:click="addLiabilityLine" class="w-full rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700">Add</button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-700">
+                                <thead class="bg-zinc-50 dark:bg-zinc-900">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left font-semibold">Category</th>
+                                        <th class="px-3 py-2 text-left font-semibold">Amount</th>
+                                        <th class="px-3 py-2 text-right font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                                    @forelse ($liabilityLines as $index => $liability)
+                                        <tr>
+                                            <td class="px-3 py-2 align-top">
+                                                @if ($editingLiabilityIndex === $index)
+                                                    <input
+                                                        type="text"
+                                                        wire:model="liabilityLines.{{ $index }}.category"
+                                                        class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
+                                                    />
+                                                    @error('liabilityLines.' . $index . '.category') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                                                @else
+                                                    <span class="text-gray-800 dark:text-gray-100">{{ $liability['category'] }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-2 align-top">
+                                                @if ($editingLiabilityIndex === $index)
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        wire:model="liabilityLines.{{ $index }}.amount"
+                                                        class="w-full rounded-md border-gray-300 dark:bg-zinc-900 dark:border-zinc-700"
+                                                    />
+                                                    @error('liabilityLines.' . $index . '.amount') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                                                @else
+                                                    <span class="font-medium">£{{ number_format((float) $liability['amount'], 2) }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-2 text-right space-x-2">
+                                                @if ($editingLiabilityIndex === $index)
+                                                    <button type="button" wire:click="saveLiabilityLine({{ $index }})" class="text-sm text-emerald-600">Save</button>
+                                                @else
+                                                    <button type="button" wire:click="editLiabilityLine({{ $index }})" class="text-sm text-blue-600">Edit</button>
+                                                @endif
+                                                <button type="button" wire:click="removeLiabilityLine({{ $index }})" class="text-sm text-rose-600">Delete</button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="px-3 py-3 text-center text-gray-500">No liabilities added yet.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
