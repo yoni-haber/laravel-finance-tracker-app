@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Budget extends Model
 {
@@ -38,8 +38,11 @@ class Budget extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function transactions(): HasManyThrough
+    public function transactions(): HasMany
     {
-        return $this->hasManyThrough(Transaction::class, Category::class, 'id', 'category_id', 'category_id');
+        return $this->hasMany(Transaction::class, 'category_id', 'category_id')
+            ->where('user_id', $this->user_id)
+            ->whereMonth('date', $this->month)
+            ->whereYear('date', $this->year);
     }
 }

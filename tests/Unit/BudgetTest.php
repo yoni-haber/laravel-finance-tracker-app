@@ -40,7 +40,7 @@ class BudgetTest extends TestCase
         $this->assertTrue($budget->category->is($category));
     }
 
-    public function test_it_retrieves_transactions_for_budget_category(): void
+    public function test_it_retrieves_transactions_for_budget_month_and_category(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -49,17 +49,38 @@ class BudgetTest extends TestCase
         $budget = Budget::factory()
             ->for($user)
             ->for($category)
-            ->create();
+            ->create([
+                'month' => 3,
+                'year' => 2025,
+            ]);
 
         $categoryTransaction = Transaction::factory()
             ->for($user)
             ->for($category)
-            ->create();
+            ->create([
+                'date' => '2025-03-10',
+            ]);
 
         Transaction::factory()
             ->for($user)
             ->for($otherCategory)
-            ->create();
+            ->create([
+                'date' => '2025-03-12',
+            ]);
+
+        Transaction::factory()
+            ->for($user)
+            ->for($category)
+            ->create([
+                'date' => '2025-04-01',
+            ]);
+
+        Transaction::factory()
+            ->for(User::factory())
+            ->for($category)
+            ->create([
+                'date' => '2025-03-15',
+            ]);
 
         $transactions = $budget->transactions;
 
