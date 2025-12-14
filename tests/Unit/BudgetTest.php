@@ -66,4 +66,22 @@ class BudgetTest extends TestCase
         $this->assertCount(1, $transactions);
         $this->assertTrue($transactions->first()->is($categoryTransaction));
     }
+
+    public function test_it_ignores_transactions_that_do_not_belong_to_budget_user(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $category = Category::factory()->for($owner)->create();
+
+        $budget = Budget::factory()->for($owner)->for($category)->create();
+
+        Transaction::factory()
+            ->for($otherUser)
+            ->create([
+                'category_id' => $category->id,
+                'user_id' => $otherUser->id,
+            ]);
+
+        $this->assertCount(0, $budget->transactions);
+    }
 }
