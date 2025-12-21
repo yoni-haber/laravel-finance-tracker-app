@@ -21,8 +21,53 @@ class UserAndFinanceSeeder extends Seeder
 
             $categories = $this->seedCategories($users);
 
-            $this->seedBudgets($users['alex'], $categories['alex']);
-            $this->seedBudgets($users['jamie'], $categories['jamie']);
+            $this->seedBudgets($users['alex'], $categories['alex'], [
+                [
+                    'category' => 'Housing',
+                    'month' => $now->month,
+                    'year' => $now->year,
+                    'amount' => 1800.00,
+                ],
+                [
+                    'category' => 'Groceries',
+                    'month' => $now->month,
+                    'year' => $now->year,
+                    'amount' => 650.00,
+                ],
+                [
+                    'category' => 'Utilities',
+                    'month' => $now->copy()->subMonth()->month,
+                    'year' => $now->copy()->subMonth()->year,
+                    'amount' => 220.00,
+                ],
+                [
+                    'category' => 'Travel',
+                    'month' => $now->copy()->addMonths(2)->month,
+                    'year' => $now->copy()->addMonths(2)->year,
+                    'amount' => 1200.00,
+                ],
+            ]);
+
+            $this->seedBudgets($users['jamie'], $categories['jamie'], [
+                [
+                    'category' => 'Living',
+                    'month' => $now->month,
+                    'year' => $now->year,
+                    'amount' => 1200.00,
+                ],
+                [
+                    'category' => 'Consulting',
+                    'month' => $now->copy()->addMonth()->month,
+                    'year' => $now->copy()->addMonth()->year,
+                    'amount' => 1000.00,
+                ],
+                [
+                    'category' => 'Education',
+                    'month' => $now->copy()->addMonths(2)->month,
+                    'year' => $now->copy()->addMonths(2)->year,
+                    'amount' => 350.00,
+                ],
+            ]);
 
             $this->seedTransactions($users, $categories);
         });
@@ -103,37 +148,8 @@ class UserAndFinanceSeeder extends Seeder
         ];
     }
 
-    private function seedBudgets(User $user, $categories): void
+    private function seedBudgets(User $user, $categories, array $budgetDefinitions): void
     {
-        $now = Carbon::now();
-
-        $budgetDefinitions = [
-            [
-                'category' => 'Housing',
-                'month' => $now->month,
-                'year' => $now->year,
-                'amount' => 1800.00,
-            ],
-            [
-                'category' => 'Groceries',
-                'month' => $now->month,
-                'year' => $now->year,
-                'amount' => 650.00,
-            ],
-            [
-                'category' => 'Utilities',
-                'month' => $now->copy()->subMonth()->month,
-                'year' => $now->copy()->subMonth()->year,
-                'amount' => 220.00,
-            ],
-            [
-                'category' => 'Travel',
-                'month' => $now->copy()->addMonths(2)->month,
-                'year' => $now->copy()->addMonths(2)->year,
-                'amount' => 1200.00,
-            ],
-        ];
-
         foreach ($budgetDefinitions as $definition) {
             // Unique constraint ensures repeatable seeds. updateOrCreate keeps values current.
             Budget::updateOrCreate(
