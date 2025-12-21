@@ -1,0 +1,12 @@
+{
+    "source": {
+        "directories": [
+            "app"
+        ]
+    },
+    "bootstrap": "vendor/autoload.php",
+    "phpUnit": {
+        "configDir": ".",
+        "customPath": "vendor/bin/phpunit"
+    }
+}
