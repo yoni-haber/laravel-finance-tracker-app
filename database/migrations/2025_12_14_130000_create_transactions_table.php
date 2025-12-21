@@ -17,6 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->boolean('is_recurring')->default(false);
             $table->enum('frequency', ['weekly', 'monthly', 'yearly'])->nullable();
+            $table->date('recurring_until')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
         });
