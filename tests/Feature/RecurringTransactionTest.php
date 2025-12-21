@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\TransactionReport;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -69,7 +70,7 @@ class RecurringTransactionTest extends TestCase
         $this->assertDatabaseHas('transactions', ['id' => $transaction->id]);
         $this->assertDatabaseHas('transaction_exceptions', [
             'transaction_id' => $transaction->id,
-            'date' => '2024-05-08',
+            'date' => Carbon::parse('2024-05-08')->toDateTimeString(),
         ]);
     }
 }
