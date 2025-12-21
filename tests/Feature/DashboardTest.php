@@ -133,4 +133,38 @@ class DashboardTest extends TestCase
                 && $uncategorised['total'] === '50.00';
         });
     }
+
+    public function test_budget_actuals_ignore_future_projected_recurring_transactions(): void
+    {
+        Carbon::setTestNow('2024-05-10');
+
+        $user = User::factory()->create();
+        $groceriesCategory = Category::factory()->create(['user_id' => $user->id, 'name' => 'Groceries']);
+
+        Budget::factory()->create([
+            'user_id' => $user->id,
+            'category_id' => $groceriesCategory->id,
+            'month' => 5,
+            'year' => 2024,
+            'amount' => 500,
+        ]);
+
+        $user->transactions()->create([
+            'category_id' => $groceriesCategory->id,
+            'type' => 'expense',
+            'amount' => 100,
+            'date' => '2024-05-01',
+            'is_recurring' => true,
+            'frequency' => 'weekly',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(Dashboard::class)
+            ->assertViewHas('budgetSummaries', function ($summaries) {
+                $groceries = $summaries->firstWhere('category', 'Groceries');
+
+                return $groceries['actual'] === '200.00'
+                    && $groceries['remaining'] === '300.00';
+            });
+    }
 }

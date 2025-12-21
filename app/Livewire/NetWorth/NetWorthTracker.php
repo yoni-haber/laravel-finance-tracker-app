@@ -5,6 +5,7 @@ namespace App\Livewire\NetWorth;
 use App\Models\NetWorthEntry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -73,6 +74,8 @@ class NetWorthTracker extends Component
             }
         }
 
+        $entry = null;
+
         if ($this->entryId) {
             $entry = NetWorthEntry::where('user_id', $data['user_id'])->find($this->entryId);
 
@@ -81,14 +84,19 @@ class NetWorthTracker extends Component
 
                 return;
             }
-
-            $entry->update($data);
-        } else {
-            $entry = NetWorthEntry::create($data);
         }
 
-        $this->syncLineItems($entry, $validated['assetLines'], 'asset');
-        $this->syncLineItems($entry, $validated['liabilityLines'], 'liability');
+        DB::transaction(function () use (&$entry, $data, $validated) {
+            if ($entry) {
+                $entry->update($data);
+            } else {
+                $entry = NetWorthEntry::create($data);
+                $this->entryId = $entry->id;
+            }
+
+            $this->syncLineItems($entry, $validated['assetLines'], 'asset');
+            $this->syncLineItems($entry, $validated['liabilityLines'], 'liability');
+        });
 
         $this->resetForm();
         session()->flash('status', 'Net worth entry saved.');

@@ -26,6 +26,23 @@ class TransactionReportTest extends TestCase
         $this->assertTrue($result->isEmpty());
     }
 
+    public function test_returns_empty_collection_when_categories_table_is_missing(): void
+    {
+        Schema::shouldReceive('hasTable')
+            ->once()
+            ->with('transactions')
+            ->andReturnTrue();
+
+        Schema::shouldReceive('hasTable')
+            ->once()
+            ->with('categories')
+            ->andReturnFalse();
+
+        $result = TransactionReport::monthlyWithRecurring(1, 1, 2024);
+
+        $this->assertTrue($result->isEmpty());
+    }
+
     public function test_filters_transactions_by_category_and_expands_recurring_entries(): void
     {
         $user = User::factory()->create();

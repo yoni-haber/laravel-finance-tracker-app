@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Budget;
 use App\Support\Money;
 use App\Support\TransactionReport;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -75,10 +76,20 @@ class Dashboard extends Component
             ->where('year', $this->year)
             ->get();
 
-        $budgetSummaries = $budgets->map(function (Budget $budget) use ($transactions) {
+        $now = now();
+        $periodEnd = Carbon::create($this->year, $this->month, 1)->endOfMonth();
+
+        if ($now->isSameMonth($periodEnd)) {
+            $periodEnd = $now->copy()->endOfDay();
+        }
+
+        $budgetSummaries = $budgets->map(function (Budget $budget) use ($transactions, $periodEnd) {
             $budgetPennies = Money::normalize($budget->amount);
-            $actualPennies = Money::normalize(
+            $spentPennies = Money::normalize(
                 $transactions
+                    // Avoid counting projected recurring entries that fall later in the current month
+                    // so "actual" reflects spending up to the present day.
+                    ->filter(fn ($transaction) => $transaction->date->lessThanOrEqualTo($periodEnd))
                     ->where('category_id', $budget->category_id)
                     ->where('type', 'expense')
                     ->sum('amount')
@@ -87,9 +98,9 @@ class Dashboard extends Component
             return [
                 'category' => $budget->category->name,
                 'budget' => Money::fromPennies($budgetPennies),
-                'actual' => Money::fromPennies($actualPennies),
-                'remaining' => Money::fromPennies($budgetPennies - $actualPennies),
-                'overspent' => $actualPennies > $budgetPennies,
+                'actual' => Money::fromPennies($spentPennies),
+                'remaining' => Money::fromPennies($budgetPennies - $spentPennies),
+                'overspent' => $spentPennies > $budgetPennies,
             ];
         });
 
