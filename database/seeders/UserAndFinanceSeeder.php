@@ -77,17 +77,15 @@ class UserAndFinanceSeeder extends Seeder
 
     private function seedUsers(): array
     {
-        $now = Carbon::now();
-
         $alex = User::updateOrCreate(
             ['email' => 'alex@example.com'],
             [
                 'name' => 'Alex Financier',
                 'password' => 'password',
-                'email_verified_at' => $now->copy()->subDay(),
-                'two_factor_secret' => 'alex-2fa-secret',
-                'two_factor_recovery_codes' => json_encode(['alex-recovery-1', 'alex-recovery-2']),
-                'two_factor_confirmed_at' => $now,
+                'email_verified_at' => null,
+                'two_factor_secret' => null,
+                'two_factor_recovery_codes' => null,
+                'two_factor_confirmed_at' => null,
                 'remember_token' => Str::random(10),
             ],
         );
@@ -124,8 +122,7 @@ class UserAndFinanceSeeder extends Seeder
             'Savings',
         ])->mapWithKeys(function ($name) use ($users) {
             $category = Category::updateOrCreate(
-                ['user_id' => $users['alex']->id, 'name' => $name],
-                []
+                ['user_id' => $users['alex']->id, 'name' => $name]
             );
 
             return [$name => $category];
@@ -137,8 +134,7 @@ class UserAndFinanceSeeder extends Seeder
             'Education',
         ])->mapWithKeys(function ($name) use ($users) {
             $category = Category::updateOrCreate(
-                ['user_id' => $users['jamie']->id, 'name' => $name],
-                []
+                ['user_id' => $users['jamie']->id, 'name' => $name]
             );
 
             return [$name => $category];
@@ -153,7 +149,6 @@ class UserAndFinanceSeeder extends Seeder
     private function seedBudgets(User $user, $categories, array $budgetDefinitions): void
     {
         foreach ($budgetDefinitions as $definition) {
-            // Unique constraint ensures repeatable seeds. updateOrCreate keeps values current.
             Budget::updateOrCreate(
                 [
                     'user_id' => $user->id,
@@ -382,7 +377,6 @@ class UserAndFinanceSeeder extends Seeder
                         'transaction_id' => $exceptionSeed['transaction']->id,
                         'date' => $exceptionDate->toDateString(),
                     ],
-                    [],
                 );
             }
         }
