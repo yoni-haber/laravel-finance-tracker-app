@@ -140,11 +140,12 @@
             document.addEventListener('DOMContentLoaded', initializeCharts);
             document.addEventListener('livewire:navigated', initializeCharts);
 
-            document.addEventListener('livewire:initialized', () => {
+            document.addEventListener('livewire:init', () => {
                 initializeCharts();
 
-                Livewire.on('dashboard-charts-updated', (incomeCategoryBreakdown, expenseCategoryBreakdown) => {
-                    renderCharts({ incomeCategoryBreakdown, expenseCategoryBreakdown });
+                Livewire.on('dashboard-charts-updated', (payload) => {
+                    const chartPayload = payload?.detail ?? payload;
+                    renderCharts(chartPayload);
                 });
             });
         </script>
