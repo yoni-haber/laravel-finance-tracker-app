@@ -80,6 +80,8 @@ class Transaction extends Model
         $start = Carbon::create($year, $month, 1);
         $end = $start->copy()->endOfMonth();
         $recurringEnd = $this->recurring_until ? Carbon::parse($this->recurring_until)->endOfDay() : null;
+        // Use the earlier of the user-configured end date or the current month window so
+        // projections never escape the period being reported.
         $cycleEnd = $recurringEnd && $recurringEnd < $end ? $recurringEnd : $end;
 
         if (! $this->is_recurring) {
@@ -100,6 +102,7 @@ class Transaction extends Model
             return collect();
         }
 
+        // Normalise exception dates before comparing to the generated recurrence sequence.
         $skippedDates = $this->occurrenceExceptions
             ->pluck('date')
             ->map(fn ($date) => Carbon::parse($date)->toDateString())

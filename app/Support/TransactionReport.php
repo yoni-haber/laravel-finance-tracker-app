@@ -10,7 +10,9 @@ class TransactionReport
 {
     public static function monthlyWithRecurring(int $userId, int $month, int $year, ?int $categoryId = null): Collection
     {
-        if (! Schema::hasTable('transactions')) {
+        if (! Schema::hasTable('transactions')
+            || ! Schema::hasTable('categories')
+            || ! Schema::hasTable('transaction_exceptions')) {
             return collect();
         }
 

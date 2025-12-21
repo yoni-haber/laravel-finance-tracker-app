@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Support\TransactionReport;
 use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -98,10 +99,29 @@ class TransactionManager extends Component
     {
         $transaction = Transaction::forUser(Auth::id())->findOrFail($transactionId);
 
-        if ($transaction->is_recurring && $occurrenceDate) {
-            $date = Carbon::parse($occurrenceDate)->toDateString();
+        if ($transaction->is_recurring) {
+            if ($occurrenceDate === null) {
+                $transaction->delete();
+                session()->flash('status', 'Transaction removed.');
 
-            $transaction->occurrenceExceptions()->firstOrCreate(['date' => $date]);
+                return;
+            }
+
+            try {
+                $parsedDate = Carbon::createFromFormat('Y-m-d', $occurrenceDate, config('app.timezone'));
+            } catch (InvalidFormatException) {
+                $this->addError('delete', 'Invalid occurrence date.');
+
+                return;
+            }
+
+            if ($parsedDate === false) {
+                $this->addError('delete', 'Invalid occurrence date.');
+
+                return;
+            }
+
+            $transaction->occurrenceExceptions()->firstOrCreate(['date' => $parsedDate->toDateString()]);
             session()->flash('status', 'Transaction occurrence removed.');
 
             return;
