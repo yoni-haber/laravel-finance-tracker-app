@@ -17,6 +17,8 @@ class UserAndFinanceSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
+            $now = Carbon::now();
+
             $users = $this->seedUsers();
 
             $categories = $this->seedCategories($users);
