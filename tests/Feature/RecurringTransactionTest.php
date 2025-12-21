@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Transactions\TransactionManager;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\TransactionReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class RecurringTransactionTest extends TestCase
@@ -28,5 +30,46 @@ class RecurringTransactionTest extends TestCase
 
         $this->assertCount(5, $transactions->where('type', 'expense'));
         $this->assertSame(125.0, $transactions->where('type', 'expense')->sum('amount'));
+    }
+
+    public function test_delete_rejects_invalid_occurrence_date(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        $transaction = Transaction::factory()->for($user)->for($category)->recurring('monthly')->create([
+            'type' => 'expense',
+            'amount' => 50,
+            'date' => '2024-05-01',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(TransactionManager::class)
+            ->call('delete', $transaction->id, 'invalid-date')
+            ->assertHasErrors('delete');
+
+        $this->assertDatabaseHas('transactions', ['id' => $transaction->id]);
+        $this->assertDatabaseCount('transaction_exceptions', 0);
+    }
+
+    public function test_delete_skips_single_recurring_occurrence_without_removing_series(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        $transaction = Transaction::factory()->for($user)->for($category)->recurring('weekly')->create([
+            'type' => 'expense',
+            'amount' => 25,
+            'date' => '2024-05-01',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(TransactionManager::class)
+            ->call('delete', $transaction->id, '2024-05-08')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('transactions', ['id' => $transaction->id]);
+        $this->assertDatabaseHas('transaction_exceptions', [
+            'transaction_id' => $transaction->id,
+            'date' => '2024-05-08',
+        ]);
     }
 }
