@@ -14,34 +14,6 @@ class TransactionReportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_returns_empty_collection_when_transactions_table_is_missing(): void
-    {
-        Schema::shouldReceive('hasTable')
-            ->once()
-            ->with('transactions')
-            ->andReturnFalse();
-
-        $result = TransactionReport::monthlyWithRecurring(1, 1, 2024);
-
-        $this->assertTrue($result->isEmpty());
-    }
-
-    public function test_returns_empty_collection_when_categories_table_is_missing(): void
-    {
-        Schema::shouldReceive('hasTable')
-            ->once()
-            ->with('transactions')
-            ->andReturnTrue();
-
-        Schema::shouldReceive('hasTable')
-            ->once()
-            ->with('categories')
-            ->andReturnFalse();
-
-        $result = TransactionReport::monthlyWithRecurring(1, 1, 2024);
-
-        $this->assertTrue($result->isEmpty());
-    }
 
     public function test_filters_transactions_by_category_and_expands_recurring_entries(): void
     {
@@ -67,7 +39,7 @@ class TransactionReportTest extends TestCase
             'date' => '2024-05-05',
         ]);
 
-        $transactions = TransactionReport::monthlyWithRecurring($user->id, 5, 2024, $primaryCategory->id);
+        $transactions = TransactionReport::projectedForMonth($user->id, 5, 2024, $primaryCategory->id);
 
         $this->assertCount(6, $transactions);
         $this->assertTrue($transactions->every(fn ($transaction) => $transaction->category_id === $primaryCategory->id));

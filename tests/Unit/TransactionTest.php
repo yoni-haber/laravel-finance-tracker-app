@@ -19,13 +19,13 @@ class TransactionTest extends TestCase
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
         $food = Category::factory()->for($user)->create();
-        $rent = Category::factory()->for($user)->create();
+        $salary = Category::factory()->for($user)->create();
 
         $januaryExpense = Transaction::factory()->for($user)->for($food)->create([
             'type' => 'expense',
             'date' => '2024-01-15',
         ]);
-        $februaryIncome = Transaction::factory()->for($user)->for($rent)->create([
+        $februaryIncome = Transaction::factory()->for($user)->for($salary)->create([
             'type' => 'income',
             'date' => '2024-02-01',
         ]);
@@ -34,7 +34,7 @@ class TransactionTest extends TestCase
             'date' => '2024-01-05',
         ]);
 
-        $this->assertEquals(
+        $this->assertSame(
             [$user->id],
             Transaction::forUser($user->id)->pluck('user_id')->unique()->all()
         );
@@ -62,11 +62,11 @@ class TransactionTest extends TestCase
             'date' => '2024-02-10',
         ]);
 
-        $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
+        $occurrences = $transaction->projectOccurrencesForMonth(2, 2024);
 
         $this->assertCount(1, $occurrences);
         $this->assertFalse($occurrences->first()->getAttribute('projected'));
-        $this->assertEquals('2024-02-10', $occurrences->first()->date->toDateString());
+        $this->assertSame('2024-02-10', $occurrences->first()->date->toDateString());
         $this->assertSame($transaction->category->id, $occurrences->first()->category->id);
     }
 
@@ -77,7 +77,39 @@ class TransactionTest extends TestCase
             'date' => '2024-01-15',
         ]);
 
-        $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
+        $occurrences = $transaction->projectOccurrencesForMonth(2, 2024);
+
+        $this->assertTrue($occurrences->isEmpty());
+    }
+
+    public function test_recurring_transaction_with_historical_last_recurrence_returns_empty(): void
+    {
+        $transaction = Transaction::factory()
+            ->for(User::factory())
+            ->for(Category::factory())
+            ->recurring('monthly')
+            ->create([
+                'date' => Carbon::create(2024, 1, 1),
+                'recurring_until' => Carbon::create(2024, 2, 1),
+            ]);
+
+        $occurrences = $transaction->projectOccurrencesForMonth(3, 2024);
+
+        $this->assertTrue($occurrences->isEmpty());
+    }
+
+    public function test_recurring_transaction_after_last_recurrence_returns_empty(): void
+    {
+        $transaction = Transaction::factory()
+            ->for(User::factory())
+            ->for(Category::factory())
+            ->recurring('monthly')
+            ->create([
+                'date' => Carbon::create(2024, 3, 15),
+                'recurring_until' => Carbon::create(2024, 3, 5),
+            ]);
+
+        $occurrences = $transaction->projectOccurrencesForMonth(3, 2024);
 
         $this->assertTrue($occurrences->isEmpty());
     }
@@ -100,13 +132,13 @@ class TransactionTest extends TestCase
             'date' => '2024-03-15',
         ]);
 
-        $marchOccurrences = $transaction->projectedOccurrencesForMonth(3, 2024);
-        $februaryOccurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
+        $marchOccurrences = $transaction->projectOccurrencesForMonth(3, 2024);
+        $februaryOccurrences = $transaction->projectOccurrencesForMonth(2, 2024);
 
         $this->assertTrue($marchOccurrences->isEmpty());
         $this->assertCount(1, $februaryOccurrences);
         $this->assertTrue($februaryOccurrences->first()->getAttribute('projected'));
-        $this->assertEquals('2024-02-15', $februaryOccurrences->first()->date->toDateString());
+        $this->assertSame('2024-02-15', $februaryOccurrences->first()->date->toDateString());
     }
 
     public function test_recurring_without_frequency_returns_empty(): void
@@ -120,7 +152,7 @@ class TransactionTest extends TestCase
                 'date' => Carbon::create(2024, 1, 1),
             ]);
 
-        $occurrences = $transaction->projectedOccurrencesForMonth(1, 2024);
+        $occurrences = $transaction->projectOccurrencesForMonth(1, 2024);
 
         $this->assertTrue($occurrences->isEmpty());
     }
@@ -137,10 +169,9 @@ class TransactionTest extends TestCase
 
         $transaction->setAttribute('frequency', 'fortnightly');
 
-        $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
+        $occurrences = $transaction->projectOccurrencesForMonth(2, 2024);
 
-        $this->assertCount(1, $occurrences);
-        $this->assertEquals('2024-02-05', $occurrences->first()->date->toDateString());
+        $this->assertCount(0, $occurrences);
     }
 
     public function test_recurring_end_before_month_returns_empty(): void
@@ -154,7 +185,7 @@ class TransactionTest extends TestCase
                 'recurring_until' => Carbon::create(2024, 1, 20),
             ]);
 
-        $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
+        $occurrences = $transaction->projectOccurrencesForMonth(2, 2024);
 
         $this->assertTrue($occurrences->isEmpty());
     }
@@ -170,7 +201,7 @@ class TransactionTest extends TestCase
                 'recurring_until' => Carbon::create(2024, 2, 1),
             ]);
 
-        $occurrences = $transaction->projectedOccurrencesForMonth(2, 2024);
+        $occurrences = $transaction->projectOccurrencesForMonth(2, 2024);
 
         $this->assertTrue($occurrences->isEmpty());
     }

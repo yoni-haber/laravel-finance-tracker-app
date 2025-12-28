@@ -6,6 +6,7 @@ use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -36,9 +37,10 @@ class CategoryTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
+
         Budget::factory()
             ->count(2)
-            ->state(new \Illuminate\Database\Eloquent\Factories\Sequence(
+            ->state(new Sequence(
                 ['month' => 1, 'year' => 2025],
                 ['month' => 2, 'year' => 2025],
             ))

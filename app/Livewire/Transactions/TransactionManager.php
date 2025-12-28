@@ -149,7 +149,7 @@ class TransactionManager extends Component
     {
         $userId = Auth::id();
 
-        $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year, $this->filterCategory)
+        $transactions = TransactionReport::projectedForMonth($userId, $this->month, $this->year, $this->filterCategory)
             ->when($this->filterType, fn ($items) => $items->where('type', $this->filterType))
             ->sortByDesc('date');
 

@@ -54,6 +54,7 @@ class BudgetTest extends TestCase
                 'year' => 2025,
             ]);
 
+        // matches the conditions for $budget
         $categoryTransaction = Transaction::factory()
             ->for($user)
             ->for($category)
@@ -61,6 +62,7 @@ class BudgetTest extends TestCase
                 'date' => '2025-03-10',
             ]);
 
+        // different category
         Transaction::factory()
             ->for($user)
             ->for($otherCategory)
@@ -68,6 +70,7 @@ class BudgetTest extends TestCase
                 'date' => '2025-03-12',
             ]);
 
+        // different month
         Transaction::factory()
             ->for($user)
             ->for($category)
@@ -75,6 +78,7 @@ class BudgetTest extends TestCase
                 'date' => '2025-04-01',
             ]);
 
+        // different user
         Transaction::factory()
             ->for(User::factory())
             ->for($category)
@@ -82,9 +86,18 @@ class BudgetTest extends TestCase
                 'date' => '2025-03-15',
             ]);
 
+        // matches the conditions for $budget
+        $anotherCategoryTransaction = Transaction::factory()
+            ->for($user)
+            ->for($category)
+            ->create([
+                'date' => '2025-03-25',
+            ]);
+
         $transactions = $budget->transactions;
 
-        $this->assertCount(1, $transactions);
+        $this->assertCount(2, $transactions);
         $this->assertTrue($transactions->first()->is($categoryTransaction));
+        $this->assertTrue($transactions->last()->is($anotherCategoryTransaction));
     }
 }

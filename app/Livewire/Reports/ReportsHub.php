@@ -73,7 +73,7 @@ class ReportsHub extends Component
         for ($i = $monthsCount - 1; $i >= 0; $i--) {
             $monthDate = $start->copy()->subMonths($i);
             $labels[] = $monthDate->format('M Y');
-            $transactions = TransactionReport::monthlyWithRecurring($userId, (int) $monthDate->month, (int) $monthDate->year);
+            $transactions = TransactionReport::projectedForMonth($userId, (int) $monthDate->month, (int) $monthDate->year);
             $income[] = (float) $transactions->where('type', 'income')->sum('amount');
             $expenses[] = (float) $transactions->where('type', 'expense')->sum('amount');
         }
