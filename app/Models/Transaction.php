@@ -75,65 +75,115 @@ class Transaction extends Model
         return $categoryId ? $query->where('category_id', $categoryId) : $query;
     }
 
-    public function projectedOccurrencesForMonth(int $month, int $year): Collection
+    /** Returns all the dates that the current transaction should appear in a given month. */
+    public function projectOccurrencesForMonth(int $month, int $year): Collection
     {
-        $start = Carbon::create($year, $month, 1);
-        $end = $start->copy()->endOfMonth();
-        $recurringEnd = $this->recurring_until ? Carbon::parse($this->recurring_until)->endOfDay() : null;
-        // Use the earlier of the user-configured end date or the current month window so
-        // projections never escape the period being reported.
-        $cycleEnd = $recurringEnd && $recurringEnd < $end ? $recurringEnd : $end;
+        // Target month window
+        $monthStart = Carbon::create($year, $month);
+        $monthEnd = $monthStart->copy()->endOfMonth();
 
+        /**
+         * NON-RECURRING TRANSACTION
+         * Return the transaction only if its date falls within the month
+         */
         if (! $this->is_recurring) {
-            return ($this->date->between($start, $end))
+            return $this->date->between($monthStart, $monthEnd)
                 ? collect([$this->replicateForDate($this->date, false)])
                 : collect();
         }
 
-        if (! $this->frequency) {
+        // Optional recurring end date
+        $recurringEnd = $this->recurring_until
+            ? Carbon::parse($this->recurring_until)
+            : null;
+
+        /**
+         * RECURRING TRANSACTION
+         * Early return if:
+         * - the transaction has no frequency
+         * - the last recurrence date is before the month started
+         * - the transaction date is after the last recurrence date
+         */
+        if (
+            ! $this->frequency ||
+            ($recurringEnd && $monthStart->greaterThan($recurringEnd)) ||
+            ($recurringEnd && $this->date->greaterThan($recurringEnd))
+        ) {
             return collect();
         }
 
-        if ($recurringEnd && $start->greaterThan($recurringEnd)) {
-            return collect();
-        }
+        /**
+         * Limit recurrence generation to the earliest of:
+         * - end of the month
+         * - recurring_until (if defined)
+         */
+        $generationEnd = $recurringEnd && $recurringEnd->lessThan($monthEnd)
+            ? $recurringEnd
+            : $monthEnd;
 
-        if ($recurringEnd && $this->date->greaterThan($recurringEnd)) {
-            return collect();
-        }
-
-        // Normalise exception dates before comparing to the generated recurrence sequence.
+        /**
+         * Dates that should be skipped (exceptions)
+         * Normalised to Y-m-d for fast comparison
+         */
         $skippedDates = $this->occurrenceExceptions
             ->pluck('date')
             ->map(fn ($date) => Carbon::parse($date)->toDateString())
-            ->toArray();
+            ->flip(); // enables O(1) lookups
+
+        // Frequency → interval mapping
+        $intervals = [
+            'weekly' => fn (Carbon $date) => $date->addWeek(),
+            'monthly' => fn (Carbon $date) => $date->addMonth(),
+            'yearly' => fn (Carbon $date) => $date->addYear(),
+        ];
+
+        // If the frequency is invalid, return empty
+        if (! isset($intervals[$this->frequency])) {
+            return collect();
+        }
 
         $occurrences = collect();
-        $current = $this->date->copy();
+        $transactionDate = $this->date->copy();
 
-        while ($current <= $cycleEnd) {
-            if ($current->between($start, $end) && ! in_array($current->toDateString(), $skippedDates, true)) {
-                $occurrences->push($this->replicateForDate($current));
+        /**
+         * Generate recurrence dates up to the allowed limit
+         */
+        while ($transactionDate->lessThanOrEqualTo($generationEnd)) {
+            $dateKey = $transactionDate->toDateString();
+
+            // Include only occurrences inside the target month and not skipped
+            if (
+                $transactionDate->between($monthStart, $monthEnd) &&
+                ! $skippedDates->has($dateKey)
+            ) {
+                $occurrences->push(
+                    $this->replicateForDate($transactionDate)
+                );
             }
 
-            switch ($this->frequency) {
-                case 'weekly':
-                    $current->addWeek();
-                    break;
-                case 'monthly':
-                    $current->addMonth();
-                    break;
-                case 'yearly':
-                    $current->addYear();
-                    break;
-                default:
-                    break 2;
-            }
+            // Advance to the next recurrence
+            $intervals[$this->frequency]($transactionDate);
         }
 
         return $occurrences;
     }
 
+    /**
+     * Create an in-memory clone of the transaction for a specific occurrence date.
+     *
+     * This method is used to represent a single effective occurrence of a transaction
+     * (either projected from a recurring transaction or normalised from a non-recurring
+     * one) without persisting a new database record.
+     *
+     * The returned model:
+     * - Shares the same primary key as the original transaction (identity is preserved)
+     * - Has its `date` set to the occurrence date being represented
+     * - Is marked with a `projected` attribute to indicate whether the occurrence is
+     *   derived from recurrence rules or represents the original transaction
+     * - Carries over the already-loaded `category` relation to avoid additional queries
+     *
+     * @param  bool  $isProjected  Whether this occurrence is derived from recurrence rules
+     */
     protected function replicateForDate(Carbon $date, bool $isProjected = true): self
     {
         $clone = $this->replicate();

@@ -4,28 +4,34 @@ namespace App\Support;
 
 use App\Models\Transaction;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 
 class TransactionReport
 {
-    public static function monthlyWithRecurring(int $userId, int $month, int $year, ?int $categoryId = null): Collection
+    /**
+     * Retrieves all transactions (including recurring ones expanded into their occurrences)
+     * for a given user, month, and year, optionally filtered by category.
+     *
+     * @return Collection<Transaction>
+     */
+    public static function projectedForMonth(int $userId, int $month, int $year, ?int $categoryId = null): Collection
     {
-        if (! Schema::hasTable('transactions')
-            || ! Schema::hasTable('categories')
-            || ! Schema::hasTable('transaction_exceptions')) {
-            return collect();
-        }
-
+        // Build the base query for the users transactions, optionally filtered by category
         $baseQuery = Transaction::forUser($userId)
             ->forCategory($categoryId)
+            // Eager load category and occurrenceExceptions relationships to avoid N+1 issues
             ->with(['category', 'occurrenceExceptions'])
-            ->where(function ($query) use ($month, $year) {
-                $query->where(function ($sub) use ($month, $year) {
-                    $sub->where('is_recurring', false)
-                        ->forMonthYear($month, $year);
-                })->orWhere('is_recurring', true);
+            // Filter transactions to include non-recurring ones in the specified month/year and all recurring ones
+            ->where(function ($q) use ($month, $year) {
+                $q->where('is_recurring', true)
+                    ->orWhere(fn ($q) => $q
+                        ->where('is_recurring', false)
+                        ->forMonthYear($month, $year)
+                    );
             });
 
-        return $baseQuery->get()->flatMap(fn (Transaction $transaction) => $transaction->projectedOccurrencesForMonth($month, $year));
+        // Fetch the transactions and expand recurring ones into their projected occurrences for the specified month/year
+        return $baseQuery->get()->flatMap(
+            fn (Transaction $transaction) => $transaction->projectOccurrencesForMonth($month, $year)
+        );
     }
 }

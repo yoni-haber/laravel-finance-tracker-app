@@ -27,7 +27,7 @@ class RecurringTransactionTest extends TestCase
             'date' => '2024-03-01',
         ]);
 
-        $transactions = TransactionReport::monthlyWithRecurring($user->id, 3, 2024);
+        $transactions = TransactionReport::projectedForMonth($user->id, 3, 2024);
 
         $this->assertCount(5, $transactions->where('type', 'expense'));
         $this->assertSame(125.0, $transactions->where('type', 'expense')->sum('amount'));

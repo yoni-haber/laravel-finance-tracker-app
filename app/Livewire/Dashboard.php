@@ -57,7 +57,7 @@ class Dashboard extends Component
             ]);
         }
 
-        $transactions = TransactionReport::monthlyWithRecurring($userId, $this->month, $this->year);
+        $transactions = TransactionReport::projectedForMonth($userId, $this->month, $this->year);
 
         $incomePennies = Money::normalize(
             $transactions->where('type', 'income')->sum('amount')

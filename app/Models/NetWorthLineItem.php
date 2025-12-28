@@ -25,7 +25,7 @@ class NetWorthLineItem extends Model
         ];
     }
 
-    public function entry(): BelongsTo
+    public function netWorthEntry(): BelongsTo
     {
         return $this->belongsTo(NetWorthEntry::class, 'net_worth_entry_id');
     }

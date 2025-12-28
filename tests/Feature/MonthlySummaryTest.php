@@ -30,7 +30,7 @@ class MonthlySummaryTest extends TestCase
             'date' => '2024-02-10',
         ]);
 
-        $transactions = TransactionReport::monthlyWithRecurring($user->id, 2, 2024);
+        $transactions = TransactionReport::projectedForMonth($user->id, 2, 2024);
 
         $this->assertSame(500.0, $transactions->where('type', 'income')->sum('amount'));
         $this->assertSame(200.0, $transactions->where('type', 'expense')->sum('amount'));
