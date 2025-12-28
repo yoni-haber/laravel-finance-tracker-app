@@ -205,4 +205,21 @@ class TransactionTest extends TestCase
 
         $this->assertTrue($occurrences->isEmpty());
     }
+
+    public function test_recurrence_generation_considers_earliest_of_recurring_end_and_month_end(): void
+    {
+        $transaction = Transaction::factory()
+            ->for(User::factory())
+            ->for(Category::factory())
+            ->recurring('weekly')
+            ->create([
+                'date' => Carbon::create(2024, 1, 5),
+                'recurring_until' => Carbon::create(2024, 1, 15),
+            ]);
+
+        $occurrences = $transaction->projectOccurrencesForMonth(1, 2024);
+
+        $this->assertCount(2, $occurrences);
+        $this->assertSame('2024-01-12', $occurrences->last()->date->toDateString());
+    }
 }
