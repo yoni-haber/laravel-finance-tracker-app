@@ -15,7 +15,7 @@ class NetWorthEntryFactory extends Factory
     {
         $assets = $this->faker->randomFloat(2, 1000, 100000);
         $liabilities = $this->faker->randomFloat(2, 0, $assets * 0.8);
-        
+
         return [
             'date' => $this->faker->date(),
             'assets' => $assets,
