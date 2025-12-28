@@ -86,7 +86,7 @@ class Transaction extends Model
          * NON-RECURRING TRANSACTION
          * Return the transaction only if its date falls within the month
          */
-        if (!$this->is_recurring) {
+        if (! $this->is_recurring) {
             return $this->date->between($monthStart, $monthEnd)
                 ? collect([$this->replicateForDate($this->date, false)])
                 : collect();
@@ -105,7 +105,7 @@ class Transaction extends Model
          * - the transaction date is after the last recurrence date
          */
         if (
-            !$this->frequency ||
+            ! $this->frequency ||
             ($recurringEnd && $monthStart->greaterThan($recurringEnd)) ||
             ($recurringEnd && $this->date->greaterThan($recurringEnd))
         ) {
@@ -132,13 +132,13 @@ class Transaction extends Model
 
         // Frequency → interval mapping
         $intervals = [
-            'weekly'  => fn (Carbon $date) => $date->addWeek(),
+            'weekly' => fn (Carbon $date) => $date->addWeek(),
             'monthly' => fn (Carbon $date) => $date->addMonth(),
-            'yearly'  => fn (Carbon $date) => $date->addYear(),
+            'yearly' => fn (Carbon $date) => $date->addYear(),
         ];
 
         // If the frequency is invalid, return empty
-        if (!isset($intervals[$this->frequency])) {
+        if (! isset($intervals[$this->frequency])) {
             return collect();
         }
 
@@ -154,7 +154,7 @@ class Transaction extends Model
             // Include only occurrences inside the target month and not skipped
             if (
                 $transactionDate->between($monthStart, $monthEnd) &&
-                !$skippedDates->has($dateKey)
+                ! $skippedDates->has($dateKey)
             ) {
                 $occurrences->push(
                     $this->replicateForDate($transactionDate)
@@ -182,12 +182,9 @@ class Transaction extends Model
      *   derived from recurrence rules or represents the original transaction
      * - Carries over the already-loaded `category` relation to avoid additional queries
      *
-     * @param Carbon $date
-     * @param bool $isProjected  Whether this occurrence is derived from recurrence rules
-     * @return self
+     * @param  bool  $isProjected  Whether this occurrence is derived from recurrence rules
      */
     protected function replicateForDate(Carbon $date, bool $isProjected = true): self
-
     {
         $clone = $this->replicate();
         $clone->id = $this->id;

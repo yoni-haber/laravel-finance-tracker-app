@@ -7,13 +7,11 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Support\TransactionReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class TransactionReportTest extends TestCase
 {
     use RefreshDatabase;
-
 
     public function test_filters_transactions_by_category_and_expands_recurring_entries(): void
     {

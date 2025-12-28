@@ -4,7 +4,6 @@ namespace App\Support;
 
 use App\Models\Transaction;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 
 class TransactionReport
 {
@@ -12,10 +11,6 @@ class TransactionReport
      * Retrieves all transactions (including recurring ones expanded into their occurrences)
      * for a given user, month, and year, optionally filtered by category.
      *
-     * @param int $userId
-     * @param int $month
-     * @param int $year
-     * @param int|null $categoryId
      * @return Collection<Transaction>
      */
     public static function projectedForMonth(int $userId, int $month, int $year, ?int $categoryId = null): Collection
