@@ -38,7 +38,7 @@ class BudgetComparisonTest extends TestCase
             'date' => '2024-04-10',
         ]);
 
-        $transactions = TransactionReport::monthlyWithRecurring($user->id, 4, 2024);
+        $transactions = TransactionReport::projectedForMonth($user->id, 4, 2024);
         $actual = $transactions->where('type', 'expense')->sum('amount');
 
         $remaining = Money::subtract(200, $actual);
