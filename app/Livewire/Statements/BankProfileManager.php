@@ -22,10 +22,6 @@ class BankProfileManager extends Component
 
     public bool $hasSeparateColumns = false;
 
-    public bool $confirmingDelete = false;
-
-    public ?BankProfile $profileToDelete = null;
-
     protected function rules(): array
     {
         return [
@@ -140,33 +136,18 @@ class BankProfileManager extends Component
         $this->cancel();
     }
 
-    public function confirmDelete(int $profileId): void
+    public function delete(int $profileId): void
     {
-        $this->profileToDelete = BankProfile::where('user_id', Auth::id())->findOrFail($profileId);
-        $this->confirmingDelete = true;
-    }
-
-    public function cancelDelete(): void
-    {
-        $this->confirmingDelete = false;
-        $this->profileToDelete = null;
-    }
-
-    public function delete(): void
-    {
-        if (!$this->profileToDelete) {
-            return;
-        }
+        $profile = BankProfile::where('user_id', Auth::id())->findOrFail($profileId);
 
         // Check if profile is being used by any imports
-        if ($this->profileToDelete->bankStatementImports()->exists()) {
+        if ($profile->bankStatementImports()->exists()) {
             $this->addError('delete', 'Cannot delete profile that has been used for imports.');
-            $this->cancelDelete();
+
             return;
         }
 
-        $this->profileToDelete->delete();
-        $this->cancelDelete();
+        $profile->delete();
         session()->flash('status', 'Bank profile deleted successfully.');
     }
 

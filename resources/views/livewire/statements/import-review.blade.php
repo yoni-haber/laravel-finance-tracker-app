@@ -260,7 +260,8 @@
                                                 Edit
                                             </button>
                                             <button 
-                                                wire:click="confirmDeleteTransaction({{ $transaction->id }})" 
+                                                wire:click="deleteTransaction({{ $transaction->id }})" 
+                                                wire:confirm="Are you sure you want to remove this transaction?"
                                                 class="text-red-600 hover:text-red-800 text-xs font-medium"
                                             >
                                                 Delete
@@ -285,84 +286,38 @@
     </div>
 
     <!-- Confirmation Modal -->
-    {{-- Commit Confirmation Modal --}}
-    <x-modal 
-        :show="$confirmingCommit" 
-        title="Confirm Import" 
-        type="warning"
-        max-width="md"
-    >
-        <div class="space-y-4">
-            <p class="text-gray-600 dark:text-gray-400">
-                This will create <strong>{{ $summary['new_transactions'] }}</strong> new transactions in your account. 
-                Categories will be assigned as selected.
-            </p>
-            
-            <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                <p class="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                    ⚠️ This action cannot be undone.
+    @if ($confirmingCommit)
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-lg font-semibold mb-4">Confirm Import</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                    This will create {{ $summary['new_transactions'] }} new transactions in your account. 
+                    Categories will be assigned as selected. This action cannot be undone.
                 </p>
-            </div>
+                
+                @error('commit')
+                    <div class="rounded-md bg-red-50 border border-red-200 p-4 mb-4">
+                        <p class="text-sm text-red-800">{{ $message }}</p>
+                    </div>
+                @enderror
 
-            @error('commit')
-                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                    <p class="text-sm text-red-800 dark:text-red-200">{{ $message }}</p>
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        wire:click="cancelCommit"
+                        class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        wire:click="commitImport"
+                        class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                        wire:loading.attr="disabled"
+                    >
+                        <span wire:loading.remove wire:target="commitImport">Confirm Import</span>
+                        <span wire:loading wire:target="commitImport">Importing...</span>
+                    </button>
                 </div>
-            @enderror
-        </div>
-
-        <x-slot name="footer">
-            <x-button 
-                variant="secondary" 
-                wire:click="cancelCommit"
-            >
-                Cancel
-            </x-button>
-            
-            <x-button 
-                variant="warning" 
-                wire:click="commitImport"
-                :loading="$loadingCommit ?? false"
-                loading-text="Importing..."
-            >
-                Confirm Import
-            </x-button>
-        </x-slot>
-    </x-modal>
-
-    {{-- Delete Transaction Confirmation Modal --}}
-    <x-modal 
-        :show="$confirmingDeleteTransaction" 
-        title="Remove Transaction" 
-        type="warning"
-        max-width="md"
-    >
-        <div class="space-y-4">
-            <p class="text-gray-600 dark:text-gray-400">
-                Are you sure you want to remove this transaction from the import?
-            </p>
-            
-            <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                <p class="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                    ⚠️ This will permanently remove the transaction from this import.
-                </p>
             </div>
         </div>
-
-        <x-slot name="footer">
-            <x-button 
-                variant="secondary" 
-                wire:click="cancelDeleteTransaction"
-            >
-                Cancel
-            </x-button>
-            
-            <x-button 
-                variant="warning" 
-                wire:click="deleteTransaction"
-            >
-                Remove Transaction
-            </x-button>
-        </x-slot>
-    </x-modal>
+    @endif
 </div>
