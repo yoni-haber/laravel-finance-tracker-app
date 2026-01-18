@@ -215,7 +215,7 @@ class StatementImportReview extends Component
         }
     }
 
-    public function backToImport(): \Illuminate\Http\RedirectResponse
+    public function backToImport()
     {
         return redirect()->route('statements.import');
     }

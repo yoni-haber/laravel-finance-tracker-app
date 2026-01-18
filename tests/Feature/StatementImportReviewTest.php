@@ -307,4 +307,19 @@ class StatementImportReviewTest extends TestCase
             ->assertSee('Income') // For positive amount
             ->assertSee('Expense'); // For negative amount
     }
+
+    public function test_back_to_import_redirects_correctly(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->for($user)->create();
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->parsed()->create();
+
+        // Add at least one transaction to avoid edge cases
+        ImportedTransaction::factory()->for($import, 'bankStatementImport')->create();
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('backToImport')
+            ->assertRedirect(route('statements.import'));
+    }
 }
