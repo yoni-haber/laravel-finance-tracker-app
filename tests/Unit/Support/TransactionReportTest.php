@@ -20,19 +20,19 @@ class TransactionReportTest extends TestCase
         $otherCategory = Category::factory()->for($user)->create();
 
         Transaction::factory()->for($user)->for($primaryCategory)->recurring('weekly')->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 10,
             'date' => '2024-05-01',
         ]);
 
         Transaction::factory()->for($user)->for($primaryCategory)->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 20,
             'date' => '2024-05-10',
         ]);
 
         Transaction::factory()->for($user)->for($otherCategory)->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 99,
             'date' => '2024-05-05',
         ]);

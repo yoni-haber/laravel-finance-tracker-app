@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Support\BankStatement;
+
+use App\Models\ImportedTransaction;
+use App\Models\Transaction;
+use App\Support\BankStatementConfig;
+use Illuminate\Support\Collection;
+
+class DuplicateDetector
+{
+    public function __construct(
+        private int $userId
+    ) {}
+
+    /**
+     * Detect and mark duplicates in transaction collection
+     */
+    public function detectDuplicates(Collection &$transactions): void
+    {
+        $transactions = $transactions->map(function ($transaction) {
+            $hash = $this->generateTransactionHash(
+                $this->userId,
+                $transaction['date'],
+                $transaction['amount'],
+                $transaction['description']
+            );
+
+            $transaction['hash'] = $hash;
+            $transaction['is_duplicate'] = $this->isDuplicate($hash);
+            
+            return $transaction;
+        });
+    }
+
+    /**
+     * Generate unique hash for transaction
+     */
+    public function generateTransactionHash(int $userId, $date, float $amount, string $description): string
+    {
+        $dateString = is_string($date) ? $date : $date->toDateString();
+        $amountString = number_format($amount, BankStatementConfig::AMOUNT_DECIMAL_PLACES, '.', '');
+        
+        $hashString = $userId . '|' . $dateString . '|' . $amountString . '|' . $description;
+        
+        return hash(BankStatementConfig::HASH_ALGORITHM, $hashString);
+    }
+
+    /**
+     * Check if transaction hash already exists
+     */
+    private function isDuplicate(string $hash): bool
+    {
+        // Check against existing committed transactions
+        $existsInTransactions = Transaction::where('user_id', $this->userId)
+            ->where('hash', $hash)
+            ->exists();
+
+        if ($existsInTransactions) {
+            return true;
+        }
+
+        // Check against previously imported transactions
+        return ImportedTransaction::whereHas('bankStatementImport', function ($query) {
+                $query->where('user_id', $this->userId);
+            })
+            ->where('hash', $hash)
+            ->exists();
+    }
+}

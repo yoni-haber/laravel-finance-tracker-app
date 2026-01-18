@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Budget;
+use App\Models\Transaction;
 use App\Support\Money;
 use App\Support\TransactionReport;
 use Carbon\Carbon;
@@ -60,10 +61,10 @@ class Dashboard extends Component
         $transactions = TransactionReport::projectedForMonth($userId, $this->month, $this->year);
 
         $incomePennies = Money::normalize(
-            $transactions->where('type', 'income')->sum('amount')
+            $transactions->where('type', Transaction::TYPE_INCOME)->sum('amount')
         );
         $expensePennies = Money::normalize(
-            $transactions->where('type', 'expense')->sum('amount')
+            $transactions->where('type', Transaction::TYPE_EXPENSE)->sum('amount')
         );
 
         $income = Money::fromPennies($incomePennies);
@@ -91,7 +92,7 @@ class Dashboard extends Component
                     // so "actual" reflects spending up to the present day.
                     ->filter(fn ($transaction) => $transaction->date->lessThanOrEqualTo($periodEnd))
                     ->where('category_id', $budget->category_id)
-                    ->where('type', 'expense')
+                    ->where('type', Transaction::TYPE_EXPENSE)
                     ->sum('amount')
             );
 
@@ -104,8 +105,8 @@ class Dashboard extends Component
             ];
         });
 
-        $categoryIncome = $this->categoryTotals($transactions, 'income');
-        $categoryExpenses = $this->categoryTotals($transactions, 'expense');
+        $categoryIncome = $this->categoryTotals($transactions, Transaction::TYPE_INCOME);
+        $categoryExpenses = $this->categoryTotals($transactions, Transaction::TYPE_EXPENSE);
 
         $this->dispatch('dashboard-charts-updated',
             incomeCategoryBreakdown: $categoryIncome->all(),
