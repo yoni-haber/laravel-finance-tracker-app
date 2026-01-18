@@ -67,8 +67,7 @@
                     @if (!$currentImport->isCommitted())
                         <button
                             wire:key="delete-button-{{ $currentImport->id }}"
-                            wire:click="cancelImport"
-                            wire:confirm="Are you sure you want to delete this import? This action cannot be undone."
+                            wire:click="confirmDeleteImport"
                             class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         >
                             Delete Import
@@ -148,6 +147,34 @@
                 You need to create at least one bank profile before importing statements.
             </p>
             <a href="{{ route('statements.bank-profiles') }}" class="text-amber-600 hover:text-amber-500 underline">Create Bank Profile</a>
+        </div>
+    @endif
+
+    {{-- Delete Confirmation Modal --}}
+    @if ($confirmingDelete)
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-lg font-semibold mb-4">Delete Import</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                    Are you sure you want to delete this import? This will permanently remove 
+                    the uploaded file and any processed transaction data. This action cannot be undone.
+                </p>
+
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        wire:click="cancelDeleteImport"
+                        class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        wire:click="cancelImport"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                    >
+                        Delete Import
+                    </button>
+                </div>
+            </div>
         </div>
     @endif
 </div>
