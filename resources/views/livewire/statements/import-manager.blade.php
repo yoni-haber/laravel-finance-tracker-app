@@ -65,13 +65,14 @@
                     @endif
 
                     @if (!$currentImport->isCommitted())
-                        <button
-                            wire:key="delete-button-{{ $currentImport->id }}"
-                            wire:click="confirmDeleteImport"
-                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                        >
-                            Delete Import
-                        </button>
+                        <flux:modal.trigger name="confirm-delete-import">
+                            <button
+                                wire:key="delete-button-{{ $currentImport->id }}"
+                                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                            >
+                                Delete Import
+                            </button>
+                        </flux:modal.trigger>
                     @endif
                 </div>
 
@@ -150,31 +151,28 @@
         </div>
     @endif
 
-    {{-- Delete Confirmation Modal --}}
-    @if ($confirmingDelete)
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-            <div class="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-md w-full mx-4">
-                <h3 class="text-lg font-semibold mb-4">Delete Import</h3>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">
+    {{-- Delete Import Confirmation Modal --}}
+    <flux:modal name="confirm-delete-import" focusable class="max-w-lg">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Delete Import</flux:heading>
+                <flux:subheading>
                     Are you sure you want to delete this import? This will permanently remove 
                     the uploaded file and any processed transaction data. This action cannot be undone.
-                </p>
+                </flux:subheading>
+            </div>
 
-                <div class="flex gap-3 justify-end">
-                    <button 
-                        wire:click="cancelDeleteImport"
-                        class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        wire:click="cancelImport"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                    >
+            <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+                <flux:modal.close>
+                    <flux:button variant="filled">Cancel</flux:button>
+                </flux:modal.close>
+
+                <flux:modal.close>
+                    <flux:button variant="danger" wire:click="cancelImport">
                         Delete Import
-                    </button>
-                </div>
+                    </flux:button>
+                </flux:modal.close>
             </div>
         </div>
-    @endif
+    </flux:modal>
 </div>

@@ -827,7 +827,7 @@ class StatementImportManagerTest extends TestCase
 
         // Simulate status change to parsed (like polling would do)
         $import->update(['status' => BankStatementConfig::STATUS_PARSED]);
-        
+
         // Call checkImportStatus to simulate the polling update
         $component->call('checkImportStatus')
             ->assertSee('Review Transactions')
@@ -836,37 +836,5 @@ class StatementImportManagerTest extends TestCase
         // Verify the review button works correctly (should redirect, not trigger delete)
         $component->call('proceedToReview')
             ->assertRedirect(route('statements.review', $import->id));
-    }
-
-    public function test_delete_confirmation_modal_flow(): void
-    {
-        $user = User::factory()->create();
-        $profile = BankProfile::factory()->for($user)->create();
-        $import = BankStatementImport::factory()
-            ->for($user)
-            ->for($profile, 'bankProfile')
-            ->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
-
-        $component = Livewire::actingAs($user)
-            ->test(StatementImportManager::class);
-
-        // Should show the delete button but no confirmation modal initially
-        $component->assertSet('confirmingDelete', false)
-            ->assertSee('Delete Import');
-
-        // Clicking confirm delete should show the modal
-        $component->call('confirmDeleteImport')
-            ->assertSet('confirmingDelete', true);
-
-        // Clicking cancel should hide the modal
-        $component->call('cancelDeleteImport')
-            ->assertSet('confirmingDelete', false);
-
-        // Clicking delete after confirming should actually delete
-        $component->call('confirmDeleteImport')
-            ->assertSet('confirmingDelete', true)
-            ->call('cancelImport')
-            ->assertSet('confirmingDelete', false)
-            ->assertSet('currentImport', null);
     }
 }

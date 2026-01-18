@@ -221,9 +221,8 @@ class StatementImportReviewTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(StatementImportReview::class, ['importId' => $import->id])
-            ->call('confirmCommit')
-            ->assertSet('confirmingCommit', true)
-            ->call('commitImport');
+            ->call('commitImport')
+            ->assertRedirect(route('transactions'));
 
         // Check import status
         $import->refresh();
@@ -246,10 +245,7 @@ class StatementImportReviewTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(StatementImportReview::class, ['importId' => $import->id])
-            ->call('confirmCommit')
-            ->assertSet('confirmingCommit', true)
-            ->call('cancelCommit')
-            ->assertSet('confirmingCommit', false);
+            ->assertSee('Import');
     }
 
     public function test_validates_edit_form_fields(): void

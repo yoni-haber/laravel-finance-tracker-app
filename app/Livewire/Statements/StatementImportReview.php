@@ -19,8 +19,6 @@ class StatementImportReview extends Component
 {
     public BankStatementImport $import;
 
-    public bool $confirmingCommit = false;
-
     public ?int $editingTransactionId = null;
 
     public array $editForm = [];
@@ -52,11 +50,6 @@ class StatementImportReview extends Component
             session()->flash('error', 'Import is not ready for review.');
             $this->redirectRoute('statements.import', navigate: true);
         }
-    }
-
-    public function confirmCommit(): void
-    {
-        $this->confirmingCommit = true;
     }
 
     public function editTransaction(int $transactionId): void
@@ -179,11 +172,6 @@ class StatementImportReview extends Component
             // Bank Statement: Positive = Income, Negative = Expense
             return $transaction->amount >= 0 ? Transaction::TYPE_INCOME : Transaction::TYPE_EXPENSE;
         }
-    }
-
-    public function cancelCommit(): void
-    {
-        $this->confirmingCommit = false;
     }
 
     public function commitImport()

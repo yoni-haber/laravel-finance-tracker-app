@@ -278,13 +278,11 @@
                             >
                                 Edit
                             </button>
-                            <button
-                                wire:click="delete({{ $profile->id }})"
-                                wire:confirm="Are you sure you want to delete this bank profile?"
-                                class="text-red-600 hover:text-red-500"
-                            >
-                                Delete
-                            </button>
+                            <flux:modal.trigger name="confirm-delete-profile-{{ $profile->id }}">
+                                <button class="text-red-600 hover:text-red-500">
+                                    Delete
+                                </button>
+                            </flux:modal.trigger>
                         </div>
                     </div>
                 @endforeach
@@ -308,4 +306,38 @@
             </div>
         @endif
     @endif
+
+    {{-- Delete Bank Profile Modals --}}
+    @foreach ($profiles as $profile)
+        <flux:modal name="confirm-delete-profile-{{ $profile->id }}" focusable class="max-w-lg">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Delete Bank Profile</flux:heading>
+                    <flux:subheading>
+                        Are you sure you want to delete the bank profile <strong>"{{ $profile->name }}"</strong>?
+                        <br><br>
+                        This action cannot be undone.
+                    </flux:subheading>
+                </div>
+
+                @error('delete')
+                    <div class="rounded-md bg-red-50 border border-red-200 p-4">
+                        <p class="text-sm text-red-800">{{ $message }}</p>
+                    </div>
+                @enderror
+
+                <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+                    <flux:modal.close>
+                        <flux:button variant="filled">Cancel</flux:button>
+                    </flux:modal.close>
+
+                    <flux:modal.close>
+                        <flux:button variant="danger" wire:click="delete({{ $profile->id }})">
+                            Delete Profile
+                        </flux:button>
+                    </flux:modal.close>
+                </div>
+            </div>
+        </flux:modal>
+    @endforeach
 </div>

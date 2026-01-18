@@ -58,12 +58,13 @@
                 
                 @if ($summary['new_transactions'] > 0)
                     <div class="flex gap-3">
-                        <button 
-                            wire:click="confirmCommit"
-                            class="bg-emerald-600 text-white px-6 py-2 rounded-md hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                        >
-                            Import {{ $summary['new_transactions'] }} Transactions
-                        </button>
+                        <flux:modal.trigger name="confirm-import-commit">
+                            <button 
+                                class="bg-emerald-600 text-white px-6 py-2 rounded-md hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                            >
+                                Import {{ $summary['new_transactions'] }} Transactions
+                            </button>
+                        </flux:modal.trigger>
                     </div>
                 @else
                     <div class="text-sm text-gray-600">
@@ -259,13 +260,11 @@
                                             >
                                                 Edit
                                             </button>
-                                            <button 
-                                                wire:click="deleteTransaction({{ $transaction->id }})" 
-                                                wire:confirm="Are you sure you want to remove this transaction?"
-                                                class="text-red-600 hover:text-red-800 text-xs font-medium"
-                                            >
-                                                Delete
-                                            </button>
+                                            <flux:modal.trigger name="confirm-remove-transaction-{{ $transaction->id }}">
+                                                <button class="text-red-600 hover:text-red-800 text-xs font-medium">
+                                                    Delete
+                                                </button>
+                                            </flux:modal.trigger>
                                         </div>
                                     @else
                                         <span class="text-gray-400 text-xs">N/A</span>
@@ -286,38 +285,64 @@
     </div>
 
     <!-- Confirmation Modal -->
-    @if ($confirmingCommit)
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-            <div class="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-md w-full mx-4">
-                <h3 class="text-lg font-semibold mb-4">Confirm Import</h3>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">
-                    This will create {{ $summary['new_transactions'] }} new transactions in your account. 
+    <flux:modal name="confirm-import-commit" focusable class="max-w-lg">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Confirm Import</flux:heading>
+                <flux:subheading>
+                    This will create <strong>{{ $summary['new_transactions'] }}</strong> new transactions in your account. 
                     Categories will be assigned as selected. This action cannot be undone.
-                </p>
-                
-                @error('commit')
-                    <div class="rounded-md bg-red-50 border border-red-200 p-4 mb-4">
-                        <p class="text-sm text-red-800">{{ $message }}</p>
-                    </div>
-                @enderror
-
-                <div class="flex gap-3 justify-end">
-                    <button 
-                        wire:click="cancelCommit"
-                        class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        wire:click="commitImport"
-                        class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
-                        wire:loading.attr="disabled"
-                    >
-                        <span wire:loading.remove wire:target="commitImport">Confirm Import</span>
-                        <span wire:loading wire:target="commitImport">Importing...</span>
-                    </button>
+                </flux:subheading>
+            </div>
+            
+            @error('commit')
+                <div class="rounded-md bg-red-50 border border-red-200 p-4">
+                    <p class="text-sm text-red-800">{{ $message }}</p>
                 </div>
+            @enderror
+
+            <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+                <flux:modal.close>
+                    <flux:button variant="filled">Cancel</flux:button>
+                </flux:modal.close>
+
+                <flux:button 
+                    variant="primary" 
+                    wire:click="commitImport"
+                    wire:loading.attr="disabled"
+                >
+                    <span wire:loading.remove wire:target="commitImport">Confirm Import</span>
+                    <span wire:loading wire:target="commitImport">Importing...</span>
+                </flux:button>
             </div>
         </div>
-    @endif
+    </flux:modal>
+
+    {{-- Remove Transaction Modals --}}
+    @foreach ($import->importedTransactions as $transaction)
+        <flux:modal name="confirm-remove-transaction-{{ $transaction->id }}" focusable class="max-w-lg">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Remove Transaction</flux:heading>
+                    <flux:subheading>
+                        Are you sure you want to remove this transaction from the import?
+                        <br><br>
+                        <strong>{{ $transaction->description }}</strong> - £{{ number_format(abs($transaction->amount), 2) }}
+                        <br><br>
+                        This will permanently remove the transaction from this import.
+                    </flux:subheading>
+                </div>
+
+                <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+                    <flux:modal.close>
+                        <flux:button variant="filled">Cancel</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button variant="danger" wire:click="deleteTransaction({{ $transaction->id }})">
+                        Remove Transaction
+                    </flux:button>
+                </div>
+            </div>
+        </flux:modal>
+    @endforeach
 </div>
