@@ -6,14 +6,14 @@ use App\Models\BankProfile;
 use App\Models\BankStatementImport;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\BankStatement\BankStatementImportProcessor;
 use App\Support\BankStatementConfig;
-use App\Support\BankStatementParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-class BankStatementParserTest extends TestCase
+class BankStatementImportProcessorTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -36,8 +36,8 @@ class BankStatementParserTest extends TestCase
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", $csvContent);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
         $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
@@ -70,8 +70,8 @@ class BankStatementParserTest extends TestCase
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", $csvContent);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -103,8 +103,8 @@ class BankStatementParserTest extends TestCase
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", $csvContent);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -150,8 +150,8 @@ class BankStatementParserTest extends TestCase
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", $csvContent);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -183,8 +183,8 @@ class BankStatementParserTest extends TestCase
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", $csvContent);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -209,8 +209,8 @@ class BankStatementParserTest extends TestCase
         // Create a CSV file that will cause a fundamental parsing error
         Storage::put("statements/{$import->id}.csv", 'This is not a valid CSV file at all - it will cause parsing issues');
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         // Even invalid CSV shouldn't crash - it should return true but create no transactions
         $this->assertTrue($result);
@@ -230,8 +230,8 @@ class BankStatementParserTest extends TestCase
 
         Storage::fake('local'); // File doesn't exist
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertFalse($result);
         $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
@@ -262,11 +262,11 @@ class BankStatementParserTest extends TestCase
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", $csvContent);
 
-        $parser = new BankStatementParser($import);
+        $processor = new BankStatementImportProcessor($import);
 
         // Parse twice
-        $result1 = $parser->parse();
-        $result2 = $parser->parse();
+        $result1 = $processor->process();
+        $result2 = $processor->process();
 
         $this->assertTrue($result1);
         $this->assertTrue($result2);
@@ -288,8 +288,8 @@ class BankStatementParserTest extends TestCase
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", $csvContent);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertFalse($result);
         $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
@@ -320,8 +320,8 @@ class BankStatementParserTest extends TestCase
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", $csvContent);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
         $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);

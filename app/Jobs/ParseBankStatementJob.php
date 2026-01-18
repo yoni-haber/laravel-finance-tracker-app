@@ -56,7 +56,6 @@ class ParseBankStatementJob implements ShouldQueue
                 logger()->info('Bank statement parsed successfully', ['import_id' => $this->importId]);
                 return true;
             } else {
-                $import->update(['status' => BankStatementConfig::STATUS_FAILED]);
                 logger()->error('Bank statement parsing failed', ['import_id' => $this->importId]);
                 return false;
             }
@@ -77,7 +76,6 @@ class ParseBankStatementJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        // Safely access importId with null check for compatibility with old queued jobs
         $importId = $this->importId ?? null;
 
         if ($importId) {

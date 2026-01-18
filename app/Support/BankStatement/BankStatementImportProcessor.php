@@ -38,7 +38,7 @@ class BankStatementImportProcessor
             }
 
             // Step 1: Read CSV file  
-            $reader = new CsvFileReader($filePath);
+            $reader = new CsvFileReader($filePath, $this->import->bankProfile);
             try {
                 $rows = $reader->readRows();
             } catch (Exception $e) {

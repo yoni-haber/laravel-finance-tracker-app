@@ -2,6 +2,7 @@
 
 namespace App\Support\BankStatement;
 
+use App\Models\BankProfile;
 use App\Support\BankStatementConfig;
 use Exception;
 use Illuminate\Support\Collection;
@@ -10,7 +11,8 @@ use SplFileObject;
 class CsvFileReader
 {
     public function __construct(
-        private string $filePath
+        private string $filePath,
+        private ?BankProfile $profile = null
     ) {}
 
     /**
@@ -27,12 +29,13 @@ class CsvFileReader
 
         $rows = collect();
         $isFirstRow = true;
+        $hasHeader = $this->profile ? ($this->profile->config['has_header'] ?? BankStatementConfig::CSV_HAS_HEADER_DEFAULT) : BankStatementConfig::CSV_HAS_HEADER_DEFAULT;
 
         while (!$file->eof()) {
             $row = $file->fgetcsv();
 
             // Skip header row if it exists
-            if ($isFirstRow && BankStatementConfig::CSV_HAS_HEADER_DEFAULT) {
+            if ($isFirstRow && $hasHeader) {
                 $isFirstRow = false;
                 continue;
             }
@@ -45,6 +48,8 @@ class CsvFileReader
             if ($row && count(array_filter($row)) > 0) {
                 $rows->push($row);
             }
+
+            $isFirstRow = false;
         }
 
         return $rows;
