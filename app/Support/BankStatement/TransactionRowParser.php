@@ -25,7 +25,7 @@ class TransactionRowParser
         $description = $this->extractDescription($row, $columns['description'] ?? null);
         $amount = $this->extractAmount($row, $columns);
 
-        if (!$date || !$description || $amount === null) {
+        if (! $date || ! $description || $amount === null) {
             return null;
         }
 
@@ -91,7 +91,7 @@ class TransactionRowParser
     private function parseDate(string $dateString): ?Carbon
     {
         $formats = BankStatementConfig::SUPPORTED_DATE_FORMATS;
-        
+
         // Try profile-specific format first
         if (isset($this->profile->config['date_format'])) {
             array_unshift($formats, $this->profile->config['date_format']);
@@ -151,10 +151,10 @@ class TransactionRowParser
 
         // Remove common currency symbols and whitespace
         $amountString = preg_replace('/[£$€¥,\s]/', '', $amountString);
-        
+
         // Handle negative amounts in parentheses
         if (preg_match('/^\((.+)\)$/', $amountString, $matches)) {
-            $amountString = '-' . $matches[1];
+            $amountString = '-'.$matches[1];
         }
 
         return is_numeric($amountString) ? (float) $amountString : null;

@@ -138,7 +138,7 @@ class BankStatementImportProcessorTest extends TestCase
             'description' => 'EXISTING TRANSACTION',
             'amount' => 100.50,
         ]);
-        
+
         // Generate hash for the existing transaction
         $detector = new \App\Support\BankStatement\DuplicateDetector($user->id);
         $hash = $detector->generateTransactionHash($user->id, $existingTransaction->date, $existingTransaction->amount, $existingTransaction->description);

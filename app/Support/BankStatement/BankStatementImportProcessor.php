@@ -27,17 +27,18 @@ class BankStatementImportProcessor
             $this->import->update(['status' => BankStatementConfig::STATUS_PARSING]);
 
             $filePath = Storage::path("statements/{$this->import->id}.csv");
-            
-            if (!$this->import->bankProfile) {
+
+            if (! $this->import->bankProfile) {
                 logger()->error('Bank statement parsing failed', [
                     'import_id' => $this->import->id,
                     'error' => 'Bank profile is required for parsing',
                 ]);
                 $this->import->update(['status' => BankStatementConfig::STATUS_FAILED]);
+
                 return false;
             }
 
-            // Step 1: Read CSV file  
+            // Step 1: Read CSV file
             $reader = new CsvFileReader($filePath, $this->import->bankProfile);
             try {
                 $rows = $reader->readRows();
@@ -48,6 +49,7 @@ class BankStatementImportProcessor
                     'error' => 'CSV file not found',
                 ]);
                 $this->import->update(['status' => BankStatementConfig::STATUS_FAILED]);
+
                 return false;
             }
 
@@ -72,7 +74,7 @@ class BankStatementImportProcessor
                 'import_id' => $this->import->id,
                 'error' => $e->getMessage(),
             ]);
-            
+
             throw $e;
         }
     }
@@ -91,6 +93,7 @@ class BankStatementImportProcessor
                     'row' => $row,
                     'error' => $e->getMessage(),
                 ]);
+
                 return null;
             }
         })->filter();

@@ -4,7 +4,6 @@ namespace App\Support;
 
 use App\Models\BankStatementImport;
 use App\Models\Transaction;
-use App\Support\BankStatementConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -100,7 +99,7 @@ class StatementImportCommitter
     private function cleanupCsvFile(): void
     {
         $filePath = "statements/{$this->import->id}.csv";
-        
+
         if (Storage::exists($filePath)) {
             try {
                 Storage::delete($filePath);
