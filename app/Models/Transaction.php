@@ -27,6 +27,7 @@ class Transaction extends Model
         'frequency',
         'recurring_until',
         'description',
+        'hash',
     ];
 
     protected function casts(): array

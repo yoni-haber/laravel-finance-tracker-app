@@ -3,7 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\BankStatementImport;
-use App\Support\BankStatementParser;
+use App\Support\BankStatement\BankStatementImportProcessor;
+use App\Support\BankStatementConfig;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -15,9 +16,9 @@ class ParseBankStatementJob implements ShouldQueue
 {
     use InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public int $tries = BankStatementConfig::JOB_MAX_TRIES;
 
-    public int $timeout = 60;
+    public int $timeout = BankStatementConfig::JOB_TIMEOUT_SECONDS;
 
     public int $importId;
 
@@ -33,12 +34,12 @@ class ParseBankStatementJob implements ShouldQueue
     {
         $import = BankStatementImport::find($this->importId);
 
-        if (! $import) {
+        if (!$import) {
             throw new ModelNotFoundException('Bank statement import not found');
         }
 
         // Prevent re-processing
-        if (! $import->isUploaded() && ! $import->isParsing()) {
+        if (!$import->isUploaded() && !$import->isParsing()) {
             logger()->info('Import already processed or in invalid state', [
                 'import_id' => $this->importId,
                 'status' => $import->status,
@@ -48,24 +49,19 @@ class ParseBankStatementJob implements ShouldQueue
         }
 
         try {
-            $import->update(['status' => BankStatementImport::STATUS_PARSING]);
-
-            $parser = new BankStatementParser($import);
-            $success = $parser->parse();
+            $processor = new BankStatementImportProcessor($import);
+            $success = $processor->process();
 
             if ($success) {
-                $import->update(['status' => BankStatementImport::STATUS_PARSED]);
                 logger()->info('Bank statement parsed successfully', ['import_id' => $this->importId]);
-
                 return true;
             } else {
-                $import->update(['status' => BankStatementImport::STATUS_FAILED]);
+                $import->update(['status' => BankStatementConfig::STATUS_FAILED]);
                 logger()->error('Bank statement parsing failed', ['import_id' => $this->importId]);
-
                 return false;
             }
         } catch (Exception $e) {
-            $import->update(['status' => BankStatementImport::STATUS_FAILED]);
+            $import->update(['status' => BankStatementConfig::STATUS_FAILED]);
 
             logger()->error('Bank statement parsing job failed', [
                 'import_id' => $this->importId,
@@ -88,7 +84,7 @@ class ParseBankStatementJob implements ShouldQueue
             $import = BankStatementImport::find($importId);
 
             if ($import) {
-                $import->update(['status' => BankStatementImport::STATUS_FAILED]);
+                $import->update(['status' => BankStatementConfig::STATUS_FAILED]);
             }
 
             logger()->error('Bank statement parsing job failed permanently', [

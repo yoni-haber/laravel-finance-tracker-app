@@ -3,6 +3,7 @@
 namespace App\Livewire\Statements;
 
 use App\Models\BankProfile;
+use App\Support\BankStatementConfig;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -25,13 +26,13 @@ class BankProfileManager extends Component
     {
         return [
             'form.name' => 'required|string|min:3|max:100',
-            'form.statement_type' => 'required|string|in:bank,credit_card',
+            'form.statement_type' => 'required|string|in:' . implode(',', BankStatementConfig::VALID_STATEMENT_TYPES),
             'form.date_column' => 'required|integer|min:1',
             'form.description_column' => 'required|integer|min:1',
             'form.amount_column' => $this->hasSeparateColumns ? 'nullable' : 'required|integer|min:1',
             'form.debit_column' => $this->hasSeparateColumns ? 'required|integer|min:1' : 'nullable',
             'form.credit_column' => $this->hasSeparateColumns ? 'required|integer|min:1' : 'nullable',
-            'form.date_format' => 'required|string|in:d/m/Y,Y-m-d,m/d/Y,d-m-Y',
+            'form.date_format' => 'required|string|in:' . implode(',', BankStatementConfig::SUPPORTED_DATE_FORMATS),
         ];
     }
 

@@ -4,7 +4,9 @@ namespace App\Support;
 
 use App\Models\BankStatementImport;
 use App\Models\Transaction;
+use App\Support\BankStatementConfig;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StatementImportCommitter
 {
@@ -32,6 +34,7 @@ class StatementImportCommitter
             DB::transaction(function () {
                 $importedTransactions = $this->import->importedTransactions()
                     ->committable()
+                    ->lockForUpdate()  // Add row locking to prevent race conditions
                     ->get();
 
                 foreach ($importedTransactions as $importedTransaction) {
@@ -74,10 +77,10 @@ class StatementImportCommitter
                 }
 
                 // Update import status
-                $this->import->update(['status' => BankStatementImport::STATUS_COMMITTED]);
+                $this->import->update(['status' => BankStatementConfig::STATUS_COMMITTED]);
 
-                // Clean up CSV file for GDPR compliance - no longer needed after import
-                $this->deleteImportFile();
+                // Clean up CSV file for GDPR compliance
+                $this->cleanupCsvFile();
             });
 
             return true;
@@ -92,23 +95,26 @@ class StatementImportCommitter
     }
 
     /**
-     * Delete the CSV file for GDPR compliance
+     * Clean up CSV file after successful commit
      */
-    private function deleteImportFile(): void
+    private function cleanupCsvFile(): void
     {
-        try {
-            \Illuminate\Support\Facades\Storage::delete("statements/{$this->import->id}.csv");
-
-            logger()->info('CSV file deleted for GDPR compliance', [
-                'import_id' => $this->import->id,
-                'user_id' => $this->import->user_id,
-            ]);
-        } catch (\Exception $e) {
-            // Log but don't fail the transaction - file cleanup is not critical
-            logger()->warning('Failed to delete CSV file after import', [
-                'import_id' => $this->import->id,
-                'error' => $e->getMessage(),
-            ]);
+        $filePath = "statements/{$this->import->id}.csv";
+        
+        if (Storage::exists($filePath)) {
+            try {
+                Storage::delete($filePath);
+                logger()->info('CSV file deleted for GDPR compliance', [
+                    'import_id' => $this->import->id,
+                    'user_id' => $this->import->user_id,
+                ]);
+            } catch (\Exception $e) {
+                // Log but don't fail the transaction - file cleanup is not critical
+                logger()->warning('Failed to delete CSV file after import', [
+                    'import_id' => $this->import->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
@@ -127,4 +133,5 @@ class StatementImportCommitter
             'committed' => $transactions->where('is_committed', true)->count(),
         ];
     }
+}
 }

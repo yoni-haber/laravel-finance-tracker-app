@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\BankProfile;
 use App\Models\User;
+use App\Support\BankStatementConfig;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,8 +23,8 @@ class BankProfileFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'name' => $this->faker->company.' Bank Profile',
-            'statement_type' => 'bank',
+            'name' => $this->faker->company . ' Bank',
+            'statement_type' => BankStatementConfig::STATEMENT_TYPE_BANK,
             'config' => [
                 'columns' => [
                     'date' => 0,
@@ -41,7 +42,7 @@ class BankProfileFactory extends Factory
     public function creditCard(): static
     {
         return $this->state(fn (array $attributes) => [
-            'statement_type' => 'credit_card',
+            'statement_type' => BankStatementConfig::STATEMENT_TYPE_CREDIT_CARD,
         ]);
     }
 

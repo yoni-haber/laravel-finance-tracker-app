@@ -6,6 +6,7 @@ use App\Models\BankProfile;
 use App\Models\BankStatementImport;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\BankStatementConfig;
 use App\Support\BankStatementParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
@@ -39,7 +40,7 @@ class BankStatementParserTest extends TestCase
         $result = $parser->parse();
 
         $this->assertTrue($result);
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
 
         $transactions = $import->importedTransactions;
         $this->assertCount(2, $transactions);
@@ -131,12 +132,17 @@ class BankStatementParserTest extends TestCase
             ],
         ]);
 
-        // Create existing transaction
-        Transaction::factory()->for($user)->create([
+        // Create existing transaction with hash
+        $existingTransaction = Transaction::factory()->for($user)->create([
             'date' => '2026-01-01',
             'description' => 'EXISTING TRANSACTION',
             'amount' => 100.50,
         ]);
+        
+        // Generate hash for the existing transaction
+        $detector = new \App\Support\BankStatement\DuplicateDetector($user->id);
+        $hash = $detector->generateTransactionHash($user->id, $existingTransaction->date, $existingTransaction->amount, $existingTransaction->description);
+        $existingTransaction->update(['hash' => $hash]);
 
         $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create();
 
@@ -208,7 +214,7 @@ class BankStatementParserTest extends TestCase
 
         // Even invalid CSV shouldn't crash - it should return true but create no transactions
         $this->assertTrue($result);
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
 
         // Should not create any transactions
         $this->assertCount(0, $import->importedTransactions);
@@ -228,7 +234,7 @@ class BankStatementParserTest extends TestCase
         $result = $parser->parse();
 
         $this->assertFalse($result);
-        $this->assertEquals(BankStatementImport::STATUS_FAILED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
 
         // Assert that the error was logged with the expected message
         Log::shouldHaveReceived('error')
@@ -286,7 +292,7 @@ class BankStatementParserTest extends TestCase
         $result = $parser->parse();
 
         $this->assertFalse($result);
-        $this->assertEquals(BankStatementImport::STATUS_FAILED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
         $this->assertCount(0, $import->importedTransactions);
 
         Log::shouldHaveReceived('error')
@@ -318,7 +324,7 @@ class BankStatementParserTest extends TestCase
         $result = $parser->parse();
 
         $this->assertTrue($result);
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
 
         // Should not create any transactions because amount is null
         $this->assertCount(0, $import->importedTransactions);

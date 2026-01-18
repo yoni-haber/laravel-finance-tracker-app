@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
 use App\Models\User;
+use App\Support\BankStatementConfig;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,8 +26,8 @@ class BankStatementImportFactory extends Factory
             'user_id' => User::factory(),
             'bank_profile_id' => BankProfile::factory(),
             'original_filename' => $this->faker->word.'.csv',
-            'status' => BankStatementImport::STATUS_UPLOADED,
-            'statement_type' => 'bank',
+            'status' => BankStatementConfig::STATUS_UPLOADED,
+            'statement_type' => BankStatementConfig::STATEMENT_TYPE_BANK,
         ];
     }
 
@@ -36,7 +37,7 @@ class BankStatementImportFactory extends Factory
     public function creditCard(): static
     {
         return $this->state(fn (array $attributes) => [
-            'statement_type' => 'credit_card',
+            'statement_type' => BankStatementConfig::STATEMENT_TYPE_CREDIT_CARD,
         ]);
     }
 
@@ -46,7 +47,7 @@ class BankStatementImportFactory extends Factory
     public function parsing(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => BankStatementImport::STATUS_PARSING,
+            'status' => BankStatementConfig::STATUS_PARSING,
         ]);
     }
 
@@ -56,7 +57,7 @@ class BankStatementImportFactory extends Factory
     public function parsed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => BankStatementImport::STATUS_PARSED,
+            'status' => BankStatementConfig::STATUS_PARSED,
         ]);
     }
 
@@ -66,7 +67,7 @@ class BankStatementImportFactory extends Factory
     public function committed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => BankStatementImport::STATUS_COMMITTED,
+            'status' => BankStatementConfig::STATUS_COMMITTED,
         ]);
     }
 
@@ -76,7 +77,7 @@ class BankStatementImportFactory extends Factory
     public function failed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => BankStatementImport::STATUS_FAILED,
+            'status' => BankStatementConfig::STATUS_FAILED,
         ]);
     }
 }

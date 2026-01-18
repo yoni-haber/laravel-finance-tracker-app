@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\BankStatementConfig;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,11 +38,11 @@ class BankProfile extends Model
 
     public function isBankStatement(): bool
     {
-        return $this->statement_type === 'bank';
+        return $this->statement_type === BankStatementConfig::STATEMENT_TYPE_BANK;
     }
 
     public function isCreditCardStatement(): bool
     {
-        return $this->statement_type === 'credit_card';
+        return $this->statement_type === BankStatementConfig::STATEMENT_TYPE_CREDIT_CARD;
     }
 }

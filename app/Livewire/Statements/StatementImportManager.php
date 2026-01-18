@@ -5,6 +5,7 @@ namespace App\Livewire\Statements;
 use App\Jobs\ParseBankStatementJob;
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
+use App\Support\BankStatementConfig;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -34,7 +35,7 @@ class StatementImportManager extends Component
                 'required',
                 'file',
                 'mimes:csv,txt',
-                'max:2048', // 2MB to match PHP limits
+                'max:' . BankStatementConfig::MAX_FILE_SIZE_KB,
             ],
             'bankProfileId' => [
                 'required',
@@ -48,9 +49,9 @@ class StatementImportManager extends Component
         // Check for any pending imports for this user
         $this->currentImport = BankStatementImport::forUser(Auth::id())
             ->whereIn('status', [
-                BankStatementImport::STATUS_UPLOADED,
-                BankStatementImport::STATUS_PARSING,
-                BankStatementImport::STATUS_PARSED,
+                BankStatementConfig::STATUS_UPLOADED,
+                BankStatementConfig::STATUS_PARSING,
+                BankStatementConfig::STATUS_PARSED,
             ])
             ->latest()
             ->first();
