@@ -56,6 +56,7 @@
                 <div class="flex gap-3">
                     @if ($currentImport->isParsed())
                         <button
+                            wire:key="review-button-{{ $currentImport->id }}"
                             wire:click="proceedToReview"
                             class="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                         >
@@ -65,6 +66,7 @@
 
                     @if (!$currentImport->isCommitted())
                         <button
+                            wire:key="delete-button-{{ $currentImport->id }}"
                             wire:click="cancelImport"
                             wire:confirm="Are you sure you want to delete this import? This action cannot be undone."
                             class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
