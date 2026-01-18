@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\Statements\StatementImportReview;
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
-use App\Models\Category;
+use App\Support\BankStatementConfig;use App\Models\Category;
 use App\Models\ImportedTransaction;
 use App\Models\Transaction;
 use App\Models\User;
@@ -21,7 +21,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         Livewire::actingAs($user)
             ->test(StatementImportReview::class, ['importId' => $import->id])
@@ -53,7 +53,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         ImportedTransaction::factory()->for($import, 'bankStatementImport')->create([
             'date' => '2026-01-01',
@@ -83,7 +83,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         // Create mix of transactions
         ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['amount' => 100.00, 'is_duplicate' => false]);
@@ -105,7 +105,7 @@ class StatementImportReviewTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create(['name' => 'Test Category']);
         $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create([
             'date' => '2026-01-01',
@@ -134,7 +134,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['amount' => 100.00]);
 
@@ -153,7 +153,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create(['statement_type' => 'credit_card']);
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['amount' => -100.00]);
 
@@ -173,7 +173,7 @@ class StatementImportReviewTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create();
 
@@ -189,7 +189,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['amount' => 100.00]);
 
@@ -206,7 +206,7 @@ class StatementImportReviewTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         ImportedTransaction::factory()->for($import, 'bankStatementImport')->create([
             'amount' => 100.00,
@@ -227,7 +227,7 @@ class StatementImportReviewTest extends TestCase
 
         // Check import status
         $import->refresh();
-        $this->assertEquals(BankStatementImport::STATUS_COMMITTED, $import->status);
+        $this->assertEquals(BankStatementConfig::STATUS_COMMITTED, $import->status);
 
         // Check transactions were created
         $transactions = Transaction::where('user_id', $user->id)->get();
@@ -242,7 +242,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         Livewire::actingAs($user)
             ->test(StatementImportReview::class, ['importId' => $import->id])
@@ -256,7 +256,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create();
 
@@ -274,7 +274,7 @@ class StatementImportReviewTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         Livewire::actingAs($user)
             ->test(StatementImportReview::class, ['importId' => $import->id])
@@ -287,8 +287,8 @@ class StatementImportReviewTest extends TestCase
         $bankProfile = BankProfile::factory()->create(['statement_type' => 'bank']);
         $ccProfile = BankProfile::factory()->create(['statement_type' => 'credit_card']);
 
-        $bankImport = BankStatementImport::factory()->for($user)->for($bankProfile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
-        $ccImport = BankStatementImport::factory()->for($user)->for($ccProfile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $bankImport = BankStatementImport::factory()->for($user)->for($bankProfile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+        $ccImport = BankStatementImport::factory()->for($user)->for($ccProfile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         ImportedTransaction::factory()->for($bankImport, 'bankStatementImport')->create(['amount' => 100.00]);
         ImportedTransaction::factory()->for($bankImport, 'bankStatementImport')->create(['amount' => -50.00]);

@@ -85,7 +85,7 @@ class StatementImportManager extends Component
             $import = BankStatementImport::create([
                 'user_id' => Auth::id(),
                 'original_filename' => $this->csvFile->getClientOriginalName(),
-                'status' => BankStatementImport::STATUS_UPLOADED,
+                'status' => BankStatementConfig::STATUS_UPLOADED,
                 'bank_profile_id' => $this->bankProfileId,
                 'statement_type' => $bankProfile->statement_type,
             ]);

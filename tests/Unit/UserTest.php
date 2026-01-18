@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
-use App\Models\Budget;
+use App\Support\BankStatementConfig;use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
@@ -83,13 +83,13 @@ class UserTest extends TestCase
         $user->bankStatementImports()->createMany([
             [
                 'original_filename' => 'statement_jan.csv',
-                'status' => BankStatementImport::STATUS_UPLOADED,
+                'status' => BankStatementConfig::STATUS_UPLOADED,
                 'bank_profile_id' => $profile->id,
                 'statement_type' => 'bank',
             ],
             [
                 'original_filename' => 'statement_feb.csv',
-                'status' => BankStatementImport::STATUS_UPLOADED,
+                'status' => BankStatementConfig::STATUS_UPLOADED,
                 'bank_profile_id' => $profile->id,
                 'statement_type' => 'bank',
             ],

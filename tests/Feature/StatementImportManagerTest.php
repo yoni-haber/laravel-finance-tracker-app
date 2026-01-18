@@ -6,7 +6,7 @@ use App\Jobs\ParseBankStatementJob;
 use App\Livewire\Statements\StatementImportManager;
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
-use App\Models\ImportedTransaction;
+use App\Support\BankStatementConfig;use App\Models\ImportedTransaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -90,7 +90,7 @@ class StatementImportManagerTest extends TestCase
         $uploadedImport = BankStatementImport::factory()
             ->for($user)
             ->for($bankProfile, 'bankProfile')
-            ->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+            ->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         Livewire::actingAs($user)
             ->test(StatementImportManager::class)
@@ -131,13 +131,13 @@ class StatementImportManagerTest extends TestCase
             ->set('currentImport', $import);
 
         // Change status in database
-        $import->update(['status' => BankStatementImport::STATUS_PARSED]);
+        $import->update(['status' => BankStatementConfig::STATUS_PARSED]);
 
         $component->call('checkImportStatus')
             ->assertSet('polling', false);
 
         // Verify the component's currentImport reflects the updated status
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $component->get('currentImport')->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $component->get('currentImport')->fresh()->status);
     }
 
     public function test_check_import_status_stops_polling_when_parsed(): void
@@ -157,7 +157,7 @@ class StatementImportManagerTest extends TestCase
             ->set('polling', true);
 
         // Update import status to parsed
-        $import->update(['status' => BankStatementImport::STATUS_PARSED]);
+        $import->update(['status' => BankStatementConfig::STATUS_PARSED]);
 
         $component->call('checkImportStatus')
             ->assertSet('polling', false);
@@ -180,7 +180,7 @@ class StatementImportManagerTest extends TestCase
             ->set('polling', true);
 
         // Update import status to failed
-        $import->update(['status' => BankStatementImport::STATUS_FAILED]);
+        $import->update(['status' => BankStatementConfig::STATUS_FAILED]);
 
         $component->call('checkImportStatus')
             ->assertSet('polling', false);
@@ -297,7 +297,7 @@ class StatementImportManagerTest extends TestCase
         // Check database
         $import = BankStatementImport::where('user_id', $user->id)->first();
         $this->assertNotNull($import);
-        $this->assertEquals(BankStatementImport::STATUS_UPLOADED, $import->status);
+        $this->assertEquals(BankStatementConfig::STATUS_UPLOADED, $import->status);
         $this->assertEquals('bank_statement.csv', $import->original_filename);
         $this->assertEquals($bankProfile->id, $import->bank_profile_id);
         $this->assertEquals('bank', $import->statement_type);
@@ -358,7 +358,7 @@ class StatementImportManagerTest extends TestCase
         $this->assertDatabaseHas('bank_statement_imports', [
             'user_id' => $user->id,
             'bank_profile_id' => $bankProfile->id,
-            'status' => BankStatementImport::STATUS_UPLOADED,
+            'status' => BankStatementConfig::STATUS_UPLOADED,
         ]);
     }
 
@@ -425,7 +425,7 @@ class StatementImportManagerTest extends TestCase
         $import = BankStatementImport::factory()
             ->for($user)
             ->for($bankProfile, 'bankProfile')
-            ->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+            ->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         // Create a file for the import
         Storage::disk('local')->put("statements/{$import->id}.csv", 'test,data');
@@ -489,7 +489,7 @@ class StatementImportManagerTest extends TestCase
         $import = BankStatementImport::factory()
             ->for($user)
             ->for($bankProfile, 'bankProfile')
-            ->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+            ->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         Livewire::actingAs($user)
             ->test(StatementImportManager::class)
@@ -522,7 +522,7 @@ class StatementImportManagerTest extends TestCase
         $import = BankStatementImport::factory()
             ->for($user)
             ->for($bankProfile, 'bankProfile')
-            ->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+            ->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         $response = Livewire::actingAs($user)
             ->test(StatementImportManager::class)
@@ -738,7 +738,7 @@ class StatementImportManagerTest extends TestCase
         $newerImport = BankStatementImport::factory()
             ->for($user)
             ->for($bankProfile, 'bankProfile')
-            ->create(['status' => BankStatementImport::STATUS_UPLOADED, 'created_at' => now()->subHour()]);
+            ->create(['status' => BankStatementConfig::STATUS_UPLOADED, 'created_at' => now()->subHour()]);
 
         Livewire::actingAs($user)
             ->test(StatementImportManager::class)

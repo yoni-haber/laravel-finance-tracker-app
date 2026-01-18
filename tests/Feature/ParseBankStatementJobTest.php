@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Jobs\ParseBankStatementJob;
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
-use App\Models\ImportedTransaction;
+use App\Support\BankStatementConfig;use App\Models\ImportedTransaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,7 +29,7 @@ class ParseBankStatementJobTest extends TestCase
             ],
         ]);
 
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         // Create CSV file
         $csvContent = "01/01/2026,Test Transaction,100.50\n02/01/2026,Another Transaction,-50.25";
@@ -42,7 +42,7 @@ class ParseBankStatementJobTest extends TestCase
 
         // Check import status
         $import->refresh();
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->status);
 
         // Check transactions were created
         $transactions = $import->importedTransactions;
@@ -67,7 +67,7 @@ class ParseBankStatementJobTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         Storage::fake('local'); // File doesn't exist
 
@@ -75,7 +75,7 @@ class ParseBankStatementJobTest extends TestCase
         $job->handle();
 
         $import->refresh();
-        $this->assertEquals(BankStatementImport::STATUS_FAILED, $import->status);
+        $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->status);
     }
 
     public function test_updates_status_to_parsing_before_processing(): void
@@ -89,7 +89,7 @@ class ParseBankStatementJobTest extends TestCase
             ],
         ]);
 
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", '01/01/2026,Test,100');
@@ -98,7 +98,7 @@ class ParseBankStatementJobTest extends TestCase
         $job->handle();
 
         $import->refresh();
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->status); // Final status after successful parsing
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->status); // Final status after successful parsing
     }
 
     public function test_is_idempotent(): void
@@ -112,7 +112,7 @@ class ParseBankStatementJobTest extends TestCase
             ],
         ]);
 
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         Storage::fake('local');
         Storage::put("statements/{$import->id}.csv", '01/01/2026,Test Transaction,100.50');
@@ -125,7 +125,7 @@ class ParseBankStatementJobTest extends TestCase
 
         // Should not create duplicate transactions
         $this->assertCount(1, $import->fresh()->importedTransactions);
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
     }
 
     public function test_can_be_queued(): void
@@ -163,7 +163,7 @@ class ParseBankStatementJobTest extends TestCase
             ],
         ]);
 
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         // Create CSV with invalid data
         $csvContent = 'invalid-date,Test Transaction,not-a-number';
@@ -175,7 +175,7 @@ class ParseBankStatementJobTest extends TestCase
 
         $import->refresh();
         // Parser should complete successfully but skip invalid rows
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->status);
 
         // Should not create any transactions due to invalid data
         $this->assertCount(0, $import->importedTransactions);
@@ -192,7 +192,7 @@ class ParseBankStatementJobTest extends TestCase
             ],
         ]);
 
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         // Create large CSV content
         $lines = [];
@@ -208,7 +208,7 @@ class ParseBankStatementJobTest extends TestCase
         $job->handle();
 
         $import->refresh();
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->status);
         $this->assertCount(1000, $import->importedTransactions);
     }
 
@@ -223,7 +223,7 @@ class ParseBankStatementJobTest extends TestCase
             ],
         ]);
 
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         // CSV with special characters
         $csvContent = "01/01/2026,Café Purchase,€25.50\n02/01/2026,Résumé Printing,£10.00";
@@ -234,7 +234,7 @@ class ParseBankStatementJobTest extends TestCase
         $job->handle();
 
         $import->refresh();
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->status);
 
         $transactions = $import->importedTransactions;
         $this->assertCount(2, $transactions);
@@ -255,7 +255,7 @@ class ParseBankStatementJobTest extends TestCase
             ],
         ]);
 
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         // Add some existing imported transactions
         ImportedTransaction::factory()->for($import, 'bankStatementImport')->create();
@@ -268,7 +268,7 @@ class ParseBankStatementJobTest extends TestCase
 
         // Should return early without processing
         $this->assertTrue($result);
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
 
         // Should not create additional transactions
         $this->assertCount(1, $import->fresh()->importedTransactions);

@@ -4,7 +4,7 @@ namespace Tests\Unit\Support;
 
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
-use App\Models\Category;
+use App\Support\BankStatementConfig;use App\Models\Category;
 use App\Models\ImportedTransaction;
 use App\Models\Transaction;
 use App\Models\User;
@@ -21,7 +21,7 @@ class StatementImportCommitterTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         // Create imported transactions
         ImportedTransaction::factory()->for($import)->create([
@@ -43,7 +43,7 @@ class StatementImportCommitterTest extends TestCase
         $result = $committer->commit();
 
         $this->assertTrue($result);
-        $this->assertEquals(BankStatementImport::STATUS_COMMITTED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_COMMITTED, $import->fresh()->status);
 
         // Should create Transaction for non-duplicate only
         $transactions = Transaction::where('user_id', $user->id)->get();
@@ -65,7 +65,7 @@ class StatementImportCommitterTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         ImportedTransaction::factory()->for($import)->create([
             'amount' => 100.00,
@@ -98,7 +98,7 @@ class StatementImportCommitterTest extends TestCase
 
         // Test bank statement
         $bankProfile = BankProfile::factory()->create(['statement_type' => 'bank']);
-        $bankImport = BankStatementImport::factory()->for($user)->for($bankProfile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $bankImport = BankStatementImport::factory()->for($user)->for($bankProfile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         ImportedTransaction::factory()->for($bankImport)->create([
             'amount' => 100.00, // Positive = income
@@ -112,7 +112,7 @@ class StatementImportCommitterTest extends TestCase
 
         // Test credit card statement
         $ccProfile = BankProfile::factory()->create(['statement_type' => 'credit_card']);
-        $ccImport = BankStatementImport::factory()->for($user)->for($ccProfile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $ccImport = BankStatementImport::factory()->for($user)->for($ccProfile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         ImportedTransaction::factory()->for($ccImport)->create([
             'amount' => 75.00, // Positive = income (payment/refund)
@@ -154,7 +154,7 @@ class StatementImportCommitterTest extends TestCase
         $ccImport = BankStatementImport::factory()
             ->for($user)
             ->for($ccProfile, 'bankProfile')
-            ->create(['status' => BankStatementImport::STATUS_PARSED]);
+            ->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         // Create imported transactions as they would come from the parser (already flipped)
         ImportedTransaction::factory()->for($ccImport)->create([
@@ -194,20 +194,20 @@ class StatementImportCommitterTest extends TestCase
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
 
         $committer = new StatementImportCommitter($import);
         $result = $committer->commit();
 
         $this->assertFalse($result);
-        $this->assertEquals(BankStatementImport::STATUS_UPLOADED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_UPLOADED, $import->fresh()->status);
     }
 
     public function test_is_idempotent(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         ImportedTransaction::factory()->for($import)->create([
             'amount' => 100.00,
@@ -226,14 +226,14 @@ class StatementImportCommitterTest extends TestCase
         // Should not create duplicate transactions
         $transactions = Transaction::where('user_id', $user->id)->get();
         $this->assertCount(1, $transactions);
-        $this->assertEquals(BankStatementImport::STATUS_COMMITTED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_COMMITTED, $import->fresh()->status);
     }
 
     public function test_rolls_back_on_failure(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->create();
-        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
         // Create imported transaction with invalid category reference
         ImportedTransaction::factory()->for($import)->create([
@@ -252,6 +252,6 @@ class StatementImportCommitterTest extends TestCase
         $this->assertCount(0, Transaction::where('user_id', $user->id)->get());
 
         // Import status should remain parsed
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
     }
 }

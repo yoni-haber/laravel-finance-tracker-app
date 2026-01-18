@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
-use App\Models\ImportedTransaction;
+use App\Support\BankStatementConfig;use App\Models\ImportedTransaction;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\BankStatementParser;
@@ -102,31 +102,31 @@ class BankStatementImportTest extends TestCase
 
     public function test_is_uploaded(): void
     {
-        $import = BankStatementImport::factory()->create(['status' => BankStatementImport::STATUS_UPLOADED]);
+        $import = BankStatementImport::factory()->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
         $this->assertTrue($import->isUploaded());
     }
 
     public function test_is_parsing(): void
     {
-        $import = BankStatementImport::factory()->create(['status' => BankStatementImport::STATUS_PARSING]);
+        $import = BankStatementImport::factory()->create(['status' => BankStatementConfig::STATUS_PARSING]);
         $this->assertTrue($import->isParsing());
     }
 
     public function test_is_parsed(): void
     {
-        $import = BankStatementImport::factory()->create(['status' => BankStatementImport::STATUS_PARSED]);
+        $import = BankStatementImport::factory()->create(['status' => BankStatementConfig::STATUS_PARSED]);
         $this->assertTrue($import->isParsed());
     }
 
     public function test_is_failed(): void
     {
-        $import = BankStatementImport::factory()->create(['status' => BankStatementImport::STATUS_FAILED]);
+        $import = BankStatementImport::factory()->create(['status' => BankStatementConfig::STATUS_FAILED]);
         $this->assertTrue($import->isFailed());
     }
 
     public function test_is_committed(): void
     {
-        $import = BankStatementImport::factory()->create(['status' => BankStatementImport::STATUS_COMMITTED]);
+        $import = BankStatementImport::factory()->create(['status' => BankStatementConfig::STATUS_COMMITTED]);
         $this->assertTrue($import->isCommitted());
     }
 
@@ -180,7 +180,7 @@ class BankStatementImportTest extends TestCase
         $result = $parser->parse();
 
         $this->assertFalse($result);
-        $this->assertEquals(BankStatementImport::STATUS_FAILED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
     }
 
     public function test_parser_fails_when_bank_profile_missing(): void
@@ -196,7 +196,7 @@ class BankStatementImportTest extends TestCase
         $result = $parser->parse();
 
         $this->assertFalse($result);
-        $this->assertEquals(BankStatementImport::STATUS_FAILED, $import->fresh()->status);
+        $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
     }
 
     public function test_parser_successfully_parses_bank_statement(): void
@@ -222,7 +222,7 @@ class BankStatementImportTest extends TestCase
 
         $freshImport = $import->fresh();
         $this->assertTrue($result, "Parser failed. Status: {$freshImport->status}");
-        $this->assertEquals(BankStatementImport::STATUS_PARSED, $freshImport->status);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $freshImport->status);
         $this->assertCount(2, $freshImport->importedTransactions);
     }
 
