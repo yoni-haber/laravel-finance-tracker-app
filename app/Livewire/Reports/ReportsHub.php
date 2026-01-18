@@ -3,6 +3,7 @@
 namespace App\Livewire\Reports;
 
 use App\Models\NetWorthEntry;
+use App\Models\Transaction;
 use App\Support\TransactionReport;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -74,8 +75,8 @@ class ReportsHub extends Component
             $monthDate = $start->copy()->subMonths($i);
             $labels[] = $monthDate->format('M Y');
             $transactions = TransactionReport::projectedForMonth($userId, (int) $monthDate->month, (int) $monthDate->year);
-            $income[] = (float) $transactions->where('type', 'income')->sum('amount');
-            $expenses[] = (float) $transactions->where('type', 'expense')->sum('amount');
+            $income[] = (float) $transactions->where('type', Transaction::TYPE_INCOME)->sum('amount');
+            $expenses[] = (float) $transactions->where('type', Transaction::TYPE_EXPENSE)->sum('amount');
         }
 
         return compact('labels', 'income', 'expenses');

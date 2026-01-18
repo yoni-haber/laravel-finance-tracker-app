@@ -5,8 +5,8 @@
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wide text-gray-900 dark:text-white">Type</label>
                 <select wire:model="type" class="mt-2 w-full rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
-                    <option value="income">Income</option>
-                    <option value="expense">Expense</option>
+                    <option value="{{ \App\Models\Transaction::TYPE_INCOME }}">Income</option>
+                    <option value="{{ \App\Models\Transaction::TYPE_EXPENSE }}">Expense</option>
                 </select>
                 @error('type') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
@@ -90,8 +90,8 @@
                 </select>
                 <select wire:model.live="filterType" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
                     <option value="">Income & expense</option>
-                    <option value="income">Income</option>
-                    <option value="expense">Expense</option>
+                    <option value="{{ \App\Models\Transaction::TYPE_INCOME }}">Income</option>
+                    <option value="{{ \App\Models\Transaction::TYPE_EXPENSE }}">Expense</option>
                 </select>
             </div>
         </div>
@@ -114,12 +114,12 @@
                             <td class="px-3 py-2">{{ \Carbon\Carbon::parse($transaction->date)->format('j M Y') }}</td>
                             <td class="px-3 py-2">{{ $transaction->category->name ?? 'Uncategorised' }}</td>
                             <td class="px-3 py-2">
-                                <span class="rounded-full px-2 py-1 text-xs {{ $transaction->type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">{{ ucfirst($transaction->type) }}</span>
+                                <span class="rounded-full px-2 py-1 text-xs {{ $transaction->type === \App\Models\Transaction::TYPE_INCOME ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">{{ ucfirst($transaction->type) }}</span>
                                 @if ($transaction->is_recurring)
                                     <span class="ml-2 text-xs text-emerald-600">Recurring ({{ ucfirst($transaction->frequency) }})</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-2 font-semibold {{ $transaction->type === 'income' ? 'text-emerald-600' : 'text-rose-600' }}">£{{ number_format($transaction->amount, 2) }}</td>
+                            <td class="px-3 py-2 font-semibold {{ $transaction->type === \App\Models\Transaction::TYPE_INCOME ? 'text-emerald-600' : 'text-rose-600' }}">£{{ number_format($transaction->amount, 2) }}</td>
                             <td class="px-3 py-2">{{ $transaction->description }}</td>
                             <td class="px-3 py-2 text-right space-x-2">
                                 <button type="button" wire:click="edit({{ $transaction->id }})" class="text-sm text-blue-600">Edit</button>

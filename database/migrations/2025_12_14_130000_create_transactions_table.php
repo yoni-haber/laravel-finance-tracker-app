@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Transaction;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,7 +13,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
-            $table->enum('type', ['income', 'expense']);
+            $table->enum('type', [Transaction::TYPE_INCOME, Transaction::TYPE_EXPENSE]);
             $table->decimal('amount', 12, 2);
             $table->date('date');
             $table->boolean('is_recurring')->default(false);

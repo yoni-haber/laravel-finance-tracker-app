@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Livewire\Statements;
+
+use App\Jobs\ParseBankStatementJob;
+use App\Models\BankProfile;
+use App\Models\BankStatementImport;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+
+#[Layout('components.layouts.app')]
+#[Title('Import Bank Statement')]
+class StatementImportManager extends Component
+{
+    use WithFileUploads;
+
+    public $csvFile;
+
+    public ?int $bankProfileId = null;
+
+    public ?BankStatementImport $currentImport = null;
+
+    public bool $polling = false;
+
+    protected function rules(): array
+    {
+        return [
+            'csvFile' => [
+                'required',
+                'file',
+                'mimes:csv,txt',
+                'max:2048', // 2MB to match PHP limits
+            ],
+            'bankProfileId' => [
+                'required',
+                'exists:bank_profiles,id,user_id,'.Auth::id(),
+            ],
+        ];
+    }
+
+    public function mount(): void
+    {
+        // Check for any pending imports for this user
+        $this->currentImport = BankStatementImport::forUser(Auth::id())
+            ->whereIn('status', [
+                BankStatementImport::STATUS_UPLOADED,
+                BankStatementImport::STATUS_PARSING,
+                BankStatementImport::STATUS_PARSED,
+            ])
+            ->latest()
+            ->first();
+
+        // Enable polling if there's an active import that's not yet parsed
+        $this->polling = $this->currentImport &&
+                        ($this->currentImport->isUploaded() || $this->currentImport->isParsing());
+    }
+
+    public function checkImportStatus(): void
+    {
+        if ($this->currentImport) {
+            $this->currentImport->refresh();
+
+            // Stop polling once parsing is complete or failed
+            if ($this->currentImport->isParsed() || $this->currentImport->isFailed()) {
+                $this->polling = false;
+            }
+        }
+    }
+
+    public function uploadStatement(): void
+    {
+        $this->validate();
+
+        try {
+            // Get the selected bank profile to determine statement type (ensure it belongs to user)
+            $bankProfile = BankProfile::where('user_id', Auth::id())->findOrFail($this->bankProfileId);
+
+            // Create the import record
+            $import = BankStatementImport::create([
+                'user_id' => Auth::id(),
+                'original_filename' => $this->csvFile->getClientOriginalName(),
+                'status' => BankStatementImport::STATUS_UPLOADED,
+                'bank_profile_id' => $this->bankProfileId,
+                'statement_type' => $bankProfile->statement_type,
+            ]);
+
+            // Store the file with a predictable name for the parser
+            $this->csvFile->storeAs('statements', "{$import->id}.csv", 'local');
+
+            // Dispatch the parsing job
+            ParseBankStatementJob::dispatch($import->id);
+
+            $this->currentImport = $import;
+            $this->polling = true; // Start polling for status updates
+            $this->reset(['csvFile', 'bankProfileId']);
+
+            session()->flash('status', 'Bank statement uploaded successfully. Processing will begin shortly.');
+        } catch (\Exception $e) {
+            logger()->error('Failed to upload bank statement', [
+                'user_id' => Auth::id(),
+                'bank_profile_id' => $this->bankProfileId,
+                'filename' => $this->csvFile?->getClientOriginalName(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            $this->addError('csvFile', 'Failed to upload file. Please try again.');
+        }
+    }
+
+    public function cancelImport(): void
+    {
+        if (! $this->currentImport || $this->currentImport->isCommitted()) {
+            return;
+        }
+
+        try {
+            // Clean up the stored file if it exists
+            Storage::delete("statements/{$this->currentImport->id}.csv");
+
+            // Delete any imported transactions (staged data)
+            $this->currentImport->importedTransactions()->delete();
+
+            // Delete the import record
+            $this->currentImport->delete();
+
+            $this->currentImport = null;
+            $this->polling = false;
+
+            session()->flash('status', 'Import deleted successfully.');
+
+        } catch (\Exception $e) {
+            logger()->error('Failed to delete import', [
+                'import_id' => $this->currentImport->id,
+                'user_id' => Auth::id(),
+                'import_status' => $this->currentImport->status,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            session()->flash('error', 'Failed to delete import. Please try again.');
+        }
+    }
+
+    public function proceedToReview()
+    {
+        if ($this->currentImport && $this->currentImport->isParsed()) {
+            return redirect()->route('statements.review', $this->currentImport->id);
+        }
+    }
+
+    public function render(): View
+    {
+        $bankProfiles = BankProfile::where('user_id', Auth::id())->orderBy('name')->get();
+
+        return view('livewire.statements.import-manager', [
+            'bankProfiles' => $bankProfiles,
+        ]);
+    }
+}

@@ -63,18 +63,6 @@ class SupportTablesSeeder extends Seeder
 
     private function seedJobTables(): void
     {
-        DB::table('jobs')->updateOrInsert(
-            ['id' => 1],
-            [
-                'queue' => 'default',
-                'payload' => json_encode(['job' => 'App\\Jobs\\RecalculateBudgets', 'attempts' => 0]),
-                'attempts' => 0,
-                'reserved_at' => null,
-                'available_at' => now()->timestamp,
-                'created_at' => now()->timestamp,
-            ],
-        );
-
         DB::table('job_batches')->updateOrInsert(
             ['id' => 'demo-batch-1'],
             [
@@ -87,17 +75,6 @@ class SupportTablesSeeder extends Seeder
                 'cancelled_at' => null,
                 'created_at' => now()->subMinutes(30)->timestamp,
                 'finished_at' => null,
-            ],
-        );
-
-        DB::table('failed_jobs')->updateOrInsert(
-            ['uuid' => 'demo-failed-job'],
-            [
-                'connection' => 'database',
-                'queue' => 'emails',
-                'payload' => json_encode(['job' => 'App\\Jobs\\SendReport', 'user' => 'alex@example.com']),
-                'exception' => 'Simulated failure for demonstration purposes.',
-                'failed_at' => now()->subDay(),
             ],
         );
     }

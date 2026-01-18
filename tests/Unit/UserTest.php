@@ -2,6 +2,8 @@
 
 namespace Tests\Unit;
 
+use App\Models\BankProfile;
+use App\Models\BankStatementImport;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Transaction;
@@ -71,5 +73,49 @@ class UserTest extends TestCase
 
         $this->assertCount(2, $user->netWorthLineItems);
         $this->assertTrue($user->netWorthLineItems->every(fn ($lineItem) => $lineItem->user->is($user)));
+    }
+
+    public function test_user_has_many_bank_statement_imports(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->for($user)->create();
+
+        $user->bankStatementImports()->createMany([
+            [
+                'original_filename' => 'statement_jan.csv',
+                'status' => BankStatementImport::STATUS_UPLOADED,
+                'bank_profile_id' => $profile->id,
+                'statement_type' => 'bank',
+            ],
+            [
+                'original_filename' => 'statement_feb.csv',
+                'status' => BankStatementImport::STATUS_UPLOADED,
+                'bank_profile_id' => $profile->id,
+                'statement_type' => 'bank',
+            ],
+        ]);
+
+        $this->assertCount(2, $user->bankStatementImports);
+        $this->assertTrue($user->bankStatementImports->every(fn ($import) => $import->user->is($user)));
+    }
+
+    public function test_user_has_many_bank_profiles(): void
+    {
+        $user = User::factory()->create();
+        $user->bankProfiles()->createMany([
+            [
+                'name' => 'Bank A Profile',
+                'statement_type' => 'bank',
+                'config' => ['columns' => ['date' => 0, 'description' => 1, 'amount' => 2], 'date_format' => 'd/m/Y'],
+            ],
+            [
+                'name' => 'Bank B Profile',
+                'statement_type' => 'credit_card',
+                'config' => ['columns' => ['date' => 0, 'description' => 1, 'amount' => 2], 'date_format' => 'd/m/Y'],
+            ],
+        ]);
+
+        $this->assertCount(2, $user->bankProfiles);
+        $this->assertTrue($user->bankProfiles->every(fn ($profile) => $profile->user->is($user)));
     }
 }

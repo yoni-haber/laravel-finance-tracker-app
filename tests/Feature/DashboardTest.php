@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\Dashboard;
 use App\Models\Budget;
 use App\Models\Category;
+use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -76,25 +77,25 @@ class DashboardTest extends TestCase
         $user->transactions()->createMany([
             [
                 'category_id' => $salaryCategory->id,
-                'type' => 'income',
+                'type' => Transaction::TYPE_INCOME,
                 'amount' => 2000,
                 'date' => '2024-05-05',
             ],
             [
                 'category_id' => null,
-                'type' => 'income',
+                'type' => Transaction::TYPE_INCOME,
                 'amount' => 500,
                 'date' => '2024-05-06',
             ],
             [
                 'category_id' => $groceriesCategory->id,
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 200,
                 'date' => '2024-05-07',
             ],
             [
                 'category_id' => null,
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 50,
                 'date' => '2024-05-08',
             ],
@@ -151,7 +152,7 @@ class DashboardTest extends TestCase
 
         $user->transactions()->create([
             'category_id' => $groceriesCategory->id,
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 100,
             'date' => '2024-05-01',
             'is_recurring' => true,
