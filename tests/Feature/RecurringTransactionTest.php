@@ -22,15 +22,15 @@ class RecurringTransactionTest extends TestCase
         $category = Category::factory()->for($user)->create();
 
         Transaction::factory()->for($user)->for($category)->recurring('weekly')->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 25,
             'date' => '2024-03-01',
         ]);
 
         $transactions = TransactionReport::projectedForMonth($user->id, 3, 2024);
 
-        $this->assertCount(5, $transactions->where('type', 'expense'));
-        $this->assertSame(125.0, $transactions->where('type', 'expense')->sum('amount'));
+        $this->assertCount(5, $transactions->where('type', Transaction::TYPE_EXPENSE));
+        $this->assertSame(125.0, $transactions->where('type', Transaction::TYPE_EXPENSE)->sum('amount'));
     }
 
     public function test_delete_rejects_invalid_occurrence_date(): void
@@ -38,7 +38,7 @@ class RecurringTransactionTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
         $transaction = Transaction::factory()->for($user)->for($category)->recurring('monthly')->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 50,
             'date' => '2024-05-01',
         ]);
@@ -57,7 +57,7 @@ class RecurringTransactionTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
         $transaction = Transaction::factory()->for($user)->for($category)->recurring('weekly')->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 25,
             'date' => '2024-05-01',
         ]);

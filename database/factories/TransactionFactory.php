@@ -16,13 +16,13 @@ class TransactionFactory extends Factory
 
     public function definition(): array
     {
-        $type = fake()->randomElement(['income', 'expense']);
+        $type = fake()->randomElement([Transaction::TYPE_INCOME, Transaction::TYPE_EXPENSE]);
 
         return [
             'user_id' => User::factory(),
             'category_id' => Category::factory(),
             'type' => $type,
-            'amount' => $type === 'income' ? fake()->randomFloat(2, 200, 2000) : fake()->randomFloat(2, 10, 800),
+            'amount' => $type === Transaction::TYPE_INCOME ? fake()->randomFloat(2, 200, 2000) : fake()->randomFloat(2, 10, 800),
             'date' => fake()->dateTimeBetween('-3 months', '+3 months'),
             'is_recurring' => false,
             'frequency' => null,

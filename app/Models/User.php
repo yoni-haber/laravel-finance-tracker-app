@@ -87,4 +87,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(NetWorthLineItem::class);
     }
+
+    public function bankStatementImports(): HasMany
+    {
+        return $this->hasMany(BankStatementImport::class);
+    }
+
+    public function bankProfiles(): HasMany
+    {
+        return $this->hasMany(BankProfile::class);
+    }
 }

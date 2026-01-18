@@ -13,6 +13,10 @@ class Transaction extends Model
 {
     use HasFactory;
 
+    const TYPE_INCOME = 'income';
+
+    const TYPE_EXPENSE = 'expense';
+
     protected $fillable = [
         'user_id',
         'category_id',
@@ -23,6 +27,7 @@ class Transaction extends Model
         'frequency',
         'recurring_until',
         'description',
+        'hash',
     ];
 
     protected function casts(): array
@@ -57,12 +62,12 @@ class Transaction extends Model
 
     public function scopeIncome($query)
     {
-        return $query->where('type', 'income');
+        return $query->where('type', self::TYPE_INCOME);
     }
 
     public function scopeExpense($query)
     {
-        return $query->where('type', 'expense');
+        return $query->where('type', self::TYPE_EXPENSE);
     }
 
     public function scopeForMonthYear($query, int $month, int $year)

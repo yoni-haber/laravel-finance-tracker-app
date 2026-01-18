@@ -22,15 +22,15 @@ class TransactionTest extends TestCase
         $salary = Category::factory()->for($user)->create();
 
         $januaryExpense = Transaction::factory()->for($user)->for($food)->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'date' => '2024-01-15',
         ]);
         $februaryIncome = Transaction::factory()->for($user)->for($salary)->create([
-            'type' => 'income',
+            'type' => Transaction::TYPE_INCOME,
             'date' => '2024-02-01',
         ]);
         Transaction::factory()->for($otherUser)->for($food)->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'date' => '2024-01-05',
         ]);
 
@@ -58,7 +58,7 @@ class TransactionTest extends TestCase
     public function test_non_recurring_transaction_in_month_returns_clone(): void
     {
         $transaction = Transaction::factory()->for(User::factory())->for(Category::factory())->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'date' => '2024-02-10',
         ]);
 
@@ -73,7 +73,7 @@ class TransactionTest extends TestCase
     public function test_non_recurring_transaction_outside_month_returns_empty(): void
     {
         $transaction = Transaction::factory()->for(User::factory())->for(Category::factory())->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'date' => '2024-01-15',
         ]);
 
@@ -121,7 +121,7 @@ class TransactionTest extends TestCase
             ->for(Category::factory())
             ->recurring('monthly')
             ->create([
-                'type' => 'income',
+                'type' => Transaction::TYPE_INCOME,
                 'amount' => 500,
                 'date' => Carbon::create(2024, 1, 15),
                 'recurring_until' => Carbon::create(2024, 4, 20),

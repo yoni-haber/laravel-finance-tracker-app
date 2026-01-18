@@ -27,19 +27,19 @@ class BudgetComparisonTest extends TestCase
         ]);
 
         Transaction::factory()->for($user)->for($category)->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 50,
             'date' => '2024-04-05',
         ]);
 
         Transaction::factory()->for($user)->for($category)->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 25,
             'date' => '2024-04-10',
         ]);
 
         $transactions = TransactionReport::projectedForMonth($user->id, 4, 2024);
-        $actual = $transactions->where('type', 'expense')->sum('amount');
+        $actual = $transactions->where('type', Transaction::TYPE_EXPENSE)->sum('amount');
 
         $remaining = Money::subtract(200, $actual);
 

@@ -19,20 +19,20 @@ class MonthlySummaryTest extends TestCase
         $category = Category::factory()->for($user)->create();
 
         Transaction::factory()->for($user)->for($category)->create([
-            'type' => 'income',
+            'type' => Transaction::TYPE_INCOME,
             'amount' => 500,
             'date' => '2024-02-05',
         ]);
 
         Transaction::factory()->for($user)->for($category)->create([
-            'type' => 'expense',
+            'type' => Transaction::TYPE_EXPENSE,
             'amount' => 200,
             'date' => '2024-02-10',
         ]);
 
         $transactions = TransactionReport::projectedForMonth($user->id, 2, 2024);
 
-        $this->assertSame(500.0, $transactions->where('type', 'income')->sum('amount'));
-        $this->assertSame(200.0, $transactions->where('type', 'expense')->sum('amount'));
+        $this->assertSame(500.0, $transactions->where('type', Transaction::TYPE_INCOME)->sum('amount'));
+        $this->assertSame(200.0, $transactions->where('type', Transaction::TYPE_EXPENSE)->sum('amount'));
     }
 }
