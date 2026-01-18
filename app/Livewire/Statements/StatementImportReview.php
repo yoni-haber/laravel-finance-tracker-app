@@ -5,6 +5,7 @@ namespace App\Livewire\Statements;
 use App\Models\BankStatementImport;
 use App\Models\Category;
 use App\Models\Transaction;
+use App\Support\BankStatement\DuplicateDetector;
 use App\Support\StatementImportCommitter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -73,17 +74,9 @@ class StatementImportReview extends Component
         $transaction = $this->import->importedTransactions()->findOrFail($this->editingTransactionId);
 
         // Convert amount based on type selection and statement type
-        if ($this->import->bankProfile->isCreditCardStatement()) {
-            // Credit Card: Expense = Negative (purchases), Income = Positive (payments)
-            $amount = $this->editForm['type'] === Transaction::TYPE_EXPENSE
-                ? -abs((float) $this->editForm['amount'])  // Expense = negative
-                : abs((float) $this->editForm['amount']);  // Income = positive
-        } else {
-            // Bank Statement: Income = Positive, Expense = Negative
-            $amount = $this->editForm['type'] === Transaction::TYPE_EXPENSE
-                ? -abs((float) $this->editForm['amount']) // Expense = negative
-                : abs((float) $this->editForm['amount']);  // Income = positive
-        }
+        $amount = $this->editForm['type'] === Transaction::TYPE_EXPENSE
+            ? -abs((float) $this->editForm['amount'])  // Expense = negative
+            : abs((float) $this->editForm['amount']);
 
         $transaction->update([
             'description' => strtoupper(trim($this->editForm['description'])),
@@ -97,14 +90,21 @@ class StatementImportReview extends Component
             'external_id' => $categoryId ? "category:{$categoryId}" : null,
         ]);
 
-        // Regenerate hash with updated data
+        // Regenerate hash using updated values
+        $duplicateDetector = new DuplicateDetector($this->import->user_id);
+        $hash = $duplicateDetector->generateTransactionHash(
+            $this->import->user_id,
+            $this->editForm['date'],
+            $amount,
+            $this->editForm['description']
+        );
+        $isDuplicate = $duplicateDetector->isDuplicateExcluding(
+            $hash,
+            $transaction->id
+        );
         $transaction->update([
-            'hash' => sha1(
-                $this->import->user_id.
-                $transaction->date->toDateString().
-                number_format($transaction->amount, 2, '.', '').
-                $transaction->description
-            ),
+            'hash' => $hash,
+            'is_duplicate' => $isDuplicate,
         ]);
 
         $this->cancelEdit();
@@ -123,29 +123,29 @@ class StatementImportReview extends Component
         $transaction = $this->import->importedTransactions()->findOrFail($transactionId);
 
         // Convert amount based on type and statement type
-        if ($this->import->bankProfile->isCreditCardStatement()) {
-            // Credit Card: Expense = Negative (purchases), Income = Positive (payments)
-            $amount = $type === Transaction::TYPE_EXPENSE
-                ? -abs($transaction->amount)  // Expense = negative
-                : abs($transaction->amount);  // Income = positive
-        } else {
-            // Bank Statement: Income = Positive, Expense = Negative
-            $amount = $type === Transaction::TYPE_EXPENSE
-                ? -abs($transaction->amount) // Expense = negative
-                : abs($transaction->amount);  // Income = positive
-        }
+        $amount = $type === Transaction::TYPE_EXPENSE
+            ? -abs($transaction->amount)  // Expense = negative
+            : abs($transaction->amount);
 
         $transaction->update(['amount' => $amount]);
 
         // Regenerate hash
+        $duplicateDetector = new DuplicateDetector($this->import->user_id);
+        $hash = $duplicateDetector->generateTransactionHash(
+            $this->import->user_id,
+            $transaction->date,
+            $transaction->amount,
+            $transaction->description
+        );
+        $isDuplicate = $duplicateDetector->isDuplicateExcluding(
+            $hash,
+            $transaction->id
+        );
         $transaction->update([
-            'hash' => sha1(
-                $this->import->user_id.
-                $transaction->date->toDateString().
-                number_format($transaction->amount, 2, '.', '').
-                $transaction->description
-            ),
+            'hash' => $hash,
+            'is_duplicate' => $isDuplicate,
         ]);
+
     }
 
     public function deleteTransaction(int $transactionId): void

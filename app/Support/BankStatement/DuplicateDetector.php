@@ -67,4 +67,27 @@ class DuplicateDetector
             ->where('hash', $hash)
             ->exists();
     }
+
+    public function isDuplicateExcluding(string $hash, ?int $excludeImportedTransactionId = null): bool
+    {
+        // Existing committed transactions
+        $existsInTransactions = Transaction::where('user_id', $this->userId)
+            ->where('hash', $hash)
+            ->exists();
+
+        if ($existsInTransactions) {
+            return true;
+        }
+
+        // Imported transactions (exclude current one)
+        $query = ImportedTransaction::whereHas('bankStatementImport', function ($query) {
+            $query->where('user_id', $this->userId);
+        })->where('hash', $hash);
+
+        if ($excludeImportedTransactionId !== null) {
+            $query->where('id', '!=', $excludeImportedTransactionId);
+        }
+
+        return $query->exists();
+    }
 }

@@ -14,8 +14,6 @@ class BankStatementConfig
 
     const JOB_MAX_TRIES = 3;
 
-    const JOB_MAX_EXCEPTIONS = 2;
-
     // Date parsing formats (in order of preference)
     const SUPPORTED_DATE_FORMATS = [
         'd/m/Y',
@@ -57,6 +55,4 @@ class BankStatementConfig
 
     // Amount precision
     const AMOUNT_DECIMAL_PLACES = 2;
-
-    const AMOUNT_SCALE = 10;
 }

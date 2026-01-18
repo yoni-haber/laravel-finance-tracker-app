@@ -46,7 +46,7 @@ class BankStatementImportProcessor
                 // File not found or cannot be read
                 logger()->error('Bank statement parsing failed', [
                     'import_id' => $this->import->id,
-                    'error' => 'CSV file not found',
+                    'error' => 'CSV file not found - '.$e->getMessage(),
                 ]);
                 $this->import->update(['status' => BankStatementConfig::STATUS_FAILED]);
 

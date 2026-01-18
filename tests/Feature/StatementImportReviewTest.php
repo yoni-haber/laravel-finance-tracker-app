@@ -319,4 +319,31 @@ class StatementImportReviewTest extends TestCase
             ->call('backToImport')
             ->assertRedirect(route('statements.import'));
     }
+
+    public function test_regenerates_hash_when_transaction_updated(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create([
+            'date' => '2026-01-01',
+            'description' => 'Original Description',
+            'amount' => 100.00,
+        ]);
+
+        $originalHash = $transaction->hash;
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('editTransaction', $transaction->id)
+            ->set('editForm.description', 'Updated Description')
+            ->set('editForm.amount', '150.00')
+            ->set('editForm.type', Transaction::TYPE_INCOME)
+            ->call('updateTransaction');
+
+        $transaction->refresh();
+        $this->assertNotEquals($originalHash, $transaction->hash);
+        $this->assertNotNull($transaction->hash);
+    }
 }

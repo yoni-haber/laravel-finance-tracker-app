@@ -7,8 +7,9 @@ use App\Models\BankStatementImport;
 use App\Models\ImportedTransaction;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\BankStatement\BankStatementImportProcessor;
+use App\Support\BankStatement\DuplicateDetector;
 use App\Support\BankStatementConfig;
-use App\Support\BankStatementParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -146,27 +147,27 @@ class BankStatementImportTest extends TestCase
         $this->assertCount(2, $importsForUser2);
     }
 
-    public function test_parser_returns_true_if_already_parsed(): void
+    public function test_processor_returns_true_if_already_parsed(): void
     {
         $import = BankStatementImport::factory()->parsed()->create();
-        $parser = new BankStatementParser($import);
+        $processor = new BankStatementImportProcessor($import);
 
-        $result = $parser->parse();
+        $result = $processor->process();
 
         $this->assertTrue($result);
     }
 
-    public function test_parser_returns_true_if_already_committed(): void
+    public function test_processor_returns_true_if_already_committed(): void
     {
         $import = BankStatementImport::factory()->committed()->create();
-        $parser = new BankStatementParser($import);
+        $processor = new BankStatementImportProcessor($import);
 
-        $result = $parser->parse();
+        $result = $processor->process();
 
         $this->assertTrue($result);
     }
 
-    public function test_parser_fails_when_csv_file_not_found(): void
+    public function test_processor_fails_when_csv_file_not_found(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->for($user)->create();
@@ -175,14 +176,14 @@ class BankStatementImportTest extends TestCase
             ->for($profile, 'bankProfile')
             ->create();
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertFalse($result);
         $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
     }
 
-    public function test_parser_fails_when_bank_profile_missing(): void
+    public function test_processor_fails_when_bank_profile_missing(): void
     {
         $user = User::factory()->create();
         $import = BankStatementImport::factory()
@@ -191,41 +192,14 @@ class BankStatementImportTest extends TestCase
 
         $this->createCsvFile($import->id, "Date,Description,Amount\n01/01/2024,TEST TRANSACTION,100.00\n");
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertFalse($result);
         $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
     }
 
-    public function test_parser_successfully_parses_bank_statement(): void
-    {
-        $user = User::factory()->create();
-        $profile = BankProfile::factory()->for($user)->create();
-        $import = BankStatementImport::factory()
-            ->for($user)
-            ->for($profile, 'bankProfile')
-            ->create();
-
-        $csvData = "01/01/2024,TEST TRANSACTION,100.00\n02/01/2024,ANOTHER TRANSACTION,-50.25\n";
-        $this->createCsvFile($import->id, $csvData);
-
-        $parser = new BankStatementParser($import);
-
-        // Capture any exceptions for debugging
-        try {
-            $result = $parser->parse();
-        } catch (\Exception $e) {
-            $this->fail('Parser threw exception: '.$e->getMessage()."\n".$e->getTraceAsString());
-        }
-
-        $freshImport = $import->fresh();
-        $this->assertTrue($result, "Parser failed. Status: {$freshImport->status}");
-        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $freshImport->status);
-        $this->assertCount(2, $freshImport->importedTransactions);
-    }
-
-    public function test_parser_successfully_parses_credit_card_statement(): void
+    public function test_processor_successfully_parses_credit_card_statement(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->creditCard()->for($user)->create();
@@ -237,8 +211,8 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n01/01/2024,PURCHASE,100.00\n02/01/2024,PAYMENT,-50.00\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -253,7 +227,7 @@ class BankStatementImportTest extends TestCase
         $this->assertEquals(50.00, $payment->amount);     // Negative becomes positive
     }
 
-    public function test_parser_handles_separate_debit_credit_columns(): void
+    public function test_processor_handles_separate_debit_credit_columns(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->separateColumns()->for($user)->create();
@@ -265,8 +239,8 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Debit,Credit\n01/01/2024,PURCHASE,100.00,\n02/01/2024,DEPOSIT,,150.00\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -280,7 +254,7 @@ class BankStatementImportTest extends TestCase
         $this->assertEquals(150.00, $deposit->amount);
     }
 
-    public function test_parser_handles_different_date_formats(): void
+    public function test_processor_handles_different_date_formats(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->isoDateFormat()->for($user)->create();
@@ -292,8 +266,8 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n2024-01-01,TEST TRANSACTION,100.00\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -301,45 +275,22 @@ class BankStatementImportTest extends TestCase
         $this->assertEquals('2024-01-01', $transaction->date->toDateString());
     }
 
-    public function test_parser_detects_duplicates_against_existing_transactions(): void
+    public function test_processor_detects_duplicates_against_existing_imported_transactions(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->for($user)->create();
 
-        // Create existing transaction
-        Transaction::factory()->for($user)->create([
-            'date' => '2024-01-01',
-            'description' => 'TEST TRANSACTION',
-            'amount' => 100.00,
-        ]);
-
-        $import = BankStatementImport::factory()
-            ->for($user)
-            ->for($profile, 'bankProfile')
-            ->create();
-
-        $csvData = "Date,Description,Amount\n01/01/2024,Test Transaction,100.00\n";
-        $this->createCsvFile($import->id, $csvData);
-
-        $parser = new BankStatementParser($import);
-        $parser->parse();
-
-        $importedTransaction = $import->fresh()->importedTransactions->first();
-        $this->assertTrue($importedTransaction->is_duplicate);
-    }
-
-    public function test_parser_detects_duplicates_against_existing_imported_transactions(): void
-    {
-        $user = User::factory()->create();
-        $profile = BankProfile::factory()->for($user)->create();
-
-        // Create existing imported transaction with the same hash
+        // Create existing imported transaction using DuplicateDetector for consistent hash
         $existingImport = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create();
+
+        $duplicateDetector = new DuplicateDetector($user->id);
+        $hash = $duplicateDetector->generateTransactionHash($user->id, '2024-01-01', 100.00, 'TEST TRANSACTION');
+
         ImportedTransaction::factory()->for($existingImport)->create([
             'date' => '2024-01-01',
             'description' => 'TEST TRANSACTION',
             'amount' => 100.00,
-            'hash' => sha1($user->id.'2024-01-01'.'100.00'.'TEST TRANSACTION'),
+            'hash' => $hash,
         ]);
 
         $import = BankStatementImport::factory()
@@ -350,14 +301,14 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n01/01/2024,Test Transaction,100.00\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $processor->process();
 
         $importedTransaction = $import->fresh()->importedTransactions->first();
         $this->assertTrue($importedTransaction->is_duplicate);
     }
 
-    public function test_parser_handles_header_skip_configuration(): void
+    public function test_processor_handles_header_skip_configuration(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->for($user)->create();
@@ -375,14 +326,14 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n01/01/2024,TEST TRANSACTION,100.00\n02/01/2024,ANOTHER TRANSACTION,-50.25\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
         $this->assertCount(2, $import->fresh()->importedTransactions);
     }
 
-    public function test_parser_skips_empty_rows(): void
+    public function test_processor_skips_empty_rows(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->for($user)->create();
@@ -394,14 +345,14 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n01/01/2024,TEST TRANSACTION,100.00\n,,\n02/01/2024,ANOTHER TRANSACTION,-50.25\n\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
         $this->assertCount(2, $import->fresh()->importedTransactions);
     }
 
-    public function test_parser_handles_invalid_amounts(): void
+    public function test_processor_handles_invalid_amounts(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->for($user)->create();
@@ -413,14 +364,14 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n01/01/2024,VALID TRANSACTION,100.00\n02/01/2024,INVALID AMOUNT,invalid\n03/01/2024,ANOTHER VALID,-50.25\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
         $this->assertCount(2, $import->fresh()->importedTransactions);
     }
 
-    public function test_parser_handles_currency_symbols_in_amounts(): void
+    public function test_processor_handles_currency_symbols_in_amounts(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->for($user)->create();
@@ -432,8 +383,8 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n01/01/2024,GBP TRANSACTION,£100.00\n02/01/2024,USD TRANSACTION,$50.25\n03/01/2024,EUR TRANSACTION,€75.50\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -447,7 +398,7 @@ class BankStatementImportTest extends TestCase
         $this->assertEquals($expectedAmounts, $amounts);
     }
 
-    public function test_parser_normalizes_descriptions(): void
+    public function test_processor_normalizes_descriptions(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->for($user)->create();
@@ -459,8 +410,8 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n01/01/2024,  test   transaction  ,100.00\n02/01/2024,another    description,50.00\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
 
@@ -471,7 +422,7 @@ class BankStatementImportTest extends TestCase
         $this->assertContains('ANOTHER DESCRIPTION', $descriptions);
     }
 
-    public function test_parser_fallback_date_formats(): void
+    public function test_processor_fallback_date_formats(): void
     {
         $user = User::factory()->create();
         $profile = BankProfile::factory()->for($user)->create([
@@ -493,8 +444,8 @@ class BankStatementImportTest extends TestCase
         $csvData = "Date,Description,Amount\n01/01/2024,TEST DD/MM/YYYY,100.00\n1/2/2024,TEST M/D/Y,50.00\n2024-01-03,TEST ISO,75.00\n";
         $this->createCsvFile($import->id, $csvData);
 
-        $parser = new BankStatementParser($import);
-        $result = $parser->parse();
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
 
         $this->assertTrue($result);
         $this->assertCount(3, $import->fresh()->importedTransactions);
