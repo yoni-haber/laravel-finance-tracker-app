@@ -4,10 +4,11 @@ namespace Tests\Unit\Support;
 
 use App\Models\BankProfile;
 use App\Models\BankStatementImport;
-use App\Support\BankStatementConfig;use App\Models\Category;
+use App\Models\Category;
 use App\Models\ImportedTransaction;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\BankStatementConfig;
 use App\Support\StatementImportCommitter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

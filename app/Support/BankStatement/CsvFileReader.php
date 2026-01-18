@@ -20,8 +20,8 @@ class CsvFileReader
      */
     public function readRows(): Collection
     {
-        if (!file_exists($this->filePath)) {
-            throw new Exception('CSV file not found: ' . $this->filePath);
+        if (! file_exists($this->filePath)) {
+            throw new Exception('CSV file not found: '.$this->filePath);
         }
 
         $file = new SplFileObject($this->filePath, 'r');
@@ -31,17 +31,18 @@ class CsvFileReader
         $isFirstRow = true;
         $hasHeader = $this->profile ? ($this->profile->config['has_header'] ?? BankStatementConfig::CSV_HAS_HEADER_DEFAULT) : BankStatementConfig::CSV_HAS_HEADER_DEFAULT;
 
-        while (!$file->eof()) {
+        while (! $file->eof()) {
             $row = $file->fgetcsv();
 
             // Skip header row if it exists
             if ($isFirstRow && $hasHeader) {
                 $isFirstRow = false;
+
                 continue;
             }
 
             // Skip empty rows if configured
-            if (BankStatementConfig::CSV_SKIP_EMPTY_ROWS && (!$row || count(array_filter($row)) === 0)) {
+            if (BankStatementConfig::CSV_SKIP_EMPTY_ROWS && (! $row || count(array_filter($row)) === 0)) {
                 continue;
             }
 

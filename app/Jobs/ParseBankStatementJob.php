@@ -34,12 +34,12 @@ class ParseBankStatementJob implements ShouldQueue
     {
         $import = BankStatementImport::find($this->importId);
 
-        if (!$import) {
+        if (! $import) {
             throw new ModelNotFoundException('Bank statement import not found');
         }
 
         // Prevent re-processing
-        if (!$import->isUploaded() && !$import->isParsing()) {
+        if (! $import->isUploaded() && ! $import->isParsing()) {
             logger()->info('Import already processed or in invalid state', [
                 'import_id' => $this->importId,
                 'status' => $import->status,
@@ -54,9 +54,11 @@ class ParseBankStatementJob implements ShouldQueue
 
             if ($success) {
                 logger()->info('Bank statement parsed successfully', ['import_id' => $this->importId]);
+
                 return true;
             } else {
                 logger()->error('Bank statement parsing failed', ['import_id' => $this->importId]);
+
                 return false;
             }
         } catch (Exception $e) {

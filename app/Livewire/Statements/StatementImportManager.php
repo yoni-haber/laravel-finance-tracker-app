@@ -35,7 +35,7 @@ class StatementImportManager extends Component
                 'required',
                 'file',
                 'mimes:csv,txt',
-                'max:' . BankStatementConfig::MAX_FILE_SIZE_KB,
+                'max:'.BankStatementConfig::MAX_FILE_SIZE_KB,
             ],
             'bankProfileId' => [
                 'required',
