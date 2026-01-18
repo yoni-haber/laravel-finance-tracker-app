@@ -279,8 +279,7 @@
                                 Edit
                             </button>
                             <button
-                                wire:click="delete({{ $profile->id }})"
-                                wire:confirm="Are you sure you want to delete this bank profile?"
+                                wire:click="confirmDelete({{ $profile->id }})"
                                 class="text-red-600 hover:text-red-500"
                             >
                                 Delete
@@ -308,4 +307,48 @@
             </div>
         @endif
     @endif
+
+    {{-- Delete Confirmation Modal --}}
+    <x-modal 
+        :show="$confirmingDelete" 
+        title="Delete Bank Profile" 
+        type="danger"
+        max-width="md"
+    >
+        <div class="space-y-4">
+            @if ($profileToDelete)
+                <p class="text-gray-600 dark:text-gray-400">
+                    Are you sure you want to delete the bank profile <strong>"{{ $profileToDelete->name }}"</strong>?
+                </p>
+                
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                    <p class="text-sm text-red-800 dark:text-red-200 font-medium">
+                        🚨 This action cannot be undone.
+                    </p>
+                </div>
+
+                @error('delete')
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                        <p class="text-sm text-red-800 dark:text-red-200">{{ $message }}</p>
+                    </div>
+                @enderror
+            @endif
+        </div>
+
+        <x-slot name="footer">
+            <x-button 
+                variant="secondary" 
+                wire:click="cancelDelete"
+            >
+                Cancel
+            </x-button>
+            
+            <x-button 
+                variant="danger" 
+                wire:click="delete"
+            >
+                Delete Profile
+            </x-button>
+        </x-slot>
+    </x-modal>
 </div>

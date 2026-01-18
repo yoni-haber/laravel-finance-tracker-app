@@ -242,7 +242,15 @@ class BankProfileManagerTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(BankProfileManager::class)
-            ->call('delete', $profile->id);
+            ->call('confirmDelete', $profile->id)
+            ->assertSet('confirmingDelete', true)
+            ->assertSet('profileToDelete.id', $profile->id)
+            ->call('cancelDelete')
+            ->assertSet('confirmingDelete', false)
+            ->assertSet('profileToDelete', null)
+            // Now actually delete
+            ->call('confirmDelete', $profile->id)
+            ->call('delete');
 
         $this->assertDatabaseMissing('bank_profiles', ['id' => $profile->id]);
     }
@@ -286,7 +294,7 @@ class BankProfileManagerTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(BankProfileManager::class)
-            ->call('delete', $profile->id);
+            ->call('confirmDelete', $profile->id);
     }
 
     public function test_cancels_form_editing(): void

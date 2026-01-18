@@ -67,8 +67,7 @@
                     @if (!$currentImport->isCommitted())
                         <button
                             wire:key="delete-button-{{ $currentImport->id }}"
-                            wire:click="cancelImport"
-                            wire:confirm="Are you sure you want to delete this import? This action cannot be undone."
+                            wire:click="confirmDeleteImport"
                             class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         >
                             Delete Import
@@ -150,4 +149,46 @@
             <a href="{{ route('statements.bank-profiles') }}" class="text-amber-600 hover:text-amber-500 underline">Create Bank Profile</a>
         </div>
     @endif
+
+    {{-- Delete Confirmation Modal --}}
+    <x-modal 
+        :show="$confirmingDelete" 
+        title="Delete Import" 
+        type="danger"
+        max-width="md"
+    >
+        <div class="space-y-4">
+            <p class="text-gray-600 dark:text-gray-400">
+                Are you sure you want to delete this import? This will permanently remove:
+            </p>
+            
+            <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
+                <li>The uploaded CSV file</li>
+                <li>All staged transaction data</li>
+                <li>Import processing status</li>
+            </ul>
+            
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                <p class="text-sm text-red-800 dark:text-red-200 font-medium">
+                    🚨 This action cannot be undone.
+                </p>
+            </div>
+        </div>
+
+        <x-slot name="footer">
+            <x-button 
+                variant="secondary" 
+                wire:click="cancelDeleteImport"
+            >
+                Cancel
+            </x-button>
+            
+            <x-button 
+                variant="danger" 
+                wire:click="cancelImport"
+            >
+                Delete Import
+            </x-button>
+        </x-slot>
+    </x-modal>
 </div>

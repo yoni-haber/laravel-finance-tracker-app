@@ -21,6 +21,10 @@ class StatementImportReview extends Component
 
     public bool $confirmingCommit = false;
 
+    public bool $confirmingDeleteTransaction = false;
+
+    public ?int $transactionToDelete = null;
+
     public ?int $editingTransactionId = null;
 
     public array $editForm = [];
@@ -155,9 +159,26 @@ class StatementImportReview extends Component
         ]);
     }
 
-    public function deleteTransaction(int $transactionId): void
+    public function confirmDeleteTransaction(int $transactionId): void
     {
-        $this->import->importedTransactions()->findOrFail($transactionId)->delete();
+        $this->transactionToDelete = $transactionId;
+        $this->confirmingDeleteTransaction = true;
+    }
+
+    public function cancelDeleteTransaction(): void
+    {
+        $this->confirmingDeleteTransaction = false;
+        $this->transactionToDelete = null;
+    }
+
+    public function deleteTransaction(): void
+    {
+        if (!$this->transactionToDelete) {
+            return;
+        }
+
+        $this->import->importedTransactions()->findOrFail($this->transactionToDelete)->delete();
+        $this->cancelDeleteTransaction();
         session()->flash('status', 'Transaction removed from import.');
     }
 

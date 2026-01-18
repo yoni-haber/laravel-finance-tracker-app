@@ -28,6 +28,8 @@ class StatementImportManager extends Component
 
     public bool $polling = false;
 
+    public bool $confirmingDelete = false;
+
     protected function rules(): array
     {
         return [
@@ -114,11 +116,23 @@ class StatementImportManager extends Component
         }
     }
 
+    public function confirmDeleteImport(): void
+    {
+        $this->confirmingDelete = true;
+    }
+
+    public function cancelDeleteImport(): void
+    {
+        $this->confirmingDelete = false;
+    }
+
     public function cancelImport(): void
     {
         if (! $this->currentImport || $this->currentImport->isCommitted()) {
             return;
         }
+
+        $this->confirmingDelete = false;
 
         try {
             // Clean up the stored file if it exists
