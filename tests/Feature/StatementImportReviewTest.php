@@ -395,4 +395,35 @@ class StatementImportReviewTest extends TestCase
             ->call('updateTransaction')
             ->assertHasErrors(['editForm.category_id']);
     }
+
+    public function test_confirm_delete_sets_deleting_transaction_id(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['is_duplicate' => false]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('confirmDeleteTransaction', $transaction->id)
+            ->assertSet('deletingTransactionId', $transaction->id)
+            ->assertDispatched('open-delete-modal');
+    }
+
+    public function test_delete_transaction_removes_record_and_closes_modal(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['is_duplicate' => false]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('confirmDeleteTransaction', $transaction->id)
+            ->call('deleteTransaction')
+            ->assertSet('deletingTransactionId', null)
+            ->assertDispatched('close-delete-modal');
+
+        $this->assertDatabaseMissing('imported_transactions', ['id' => $transaction->id]);
+    }
 }

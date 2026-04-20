@@ -23,6 +23,8 @@ class StatementImportReview extends Component
 
     public ?int $editingTransactionId = null;
 
+    public ?int $deletingTransactionId = null;
+
     public array $editForm = [];
 
     protected function rules(): array
@@ -136,10 +138,20 @@ class StatementImportReview extends Component
         ]);
     }
 
-    public function deleteTransaction(int $transactionId): void
+    public function confirmDeleteTransaction(int $transactionId): void
     {
-        $this->import->importedTransactions()->findOrFail($transactionId)->delete();
-        session()->flash('status', 'Transaction removed from import.');
+        $this->deletingTransactionId = $transactionId;
+        $this->dispatch('open-delete-modal');
+    }
+
+    public function deleteTransaction(): void
+    {
+        if ($this->deletingTransactionId) {
+            $this->import->importedTransactions()->findOrFail($this->deletingTransactionId)->delete();
+            $this->deletingTransactionId = null;
+            session()->flash('status', 'Transaction removed from import.');
+        }
+        $this->dispatch('close-delete-modal');
     }
 
     private function determineTransactionType($transaction): string

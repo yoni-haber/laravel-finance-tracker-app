@@ -260,11 +260,12 @@
                                             >
                                                 Edit
                                             </button>
-                                            <flux:modal.trigger name="confirm-remove-transaction-{{ $transaction->id }}">
-                                                <button class="text-red-600 hover:text-red-800 text-xs font-medium">
-                                                    Delete
-                                                </button>
-                                            </flux:modal.trigger>
+                                            <button
+                                                wire:click="confirmDeleteTransaction({{ $transaction->id }})"
+                                                class="text-red-600 hover:text-red-800 text-xs font-medium"
+                                            >
+                                                Delete
+                                            </button>
                                         </div>
                                     @else
                                         <span class="text-gray-400 text-xs">N/A</span>
@@ -318,31 +319,38 @@
         </div>
     </flux:modal>
 
-    {{-- Remove Transaction Modals --}}
-    @foreach ($import->importedTransactions as $transaction)
-        <flux:modal name="confirm-remove-transaction-{{ $transaction->id }}" focusable class="max-w-lg">
-            <div class="space-y-6">
-                <div>
-                    <flux:heading size="lg">Remove Transaction</flux:heading>
-                    <flux:subheading>
-                        Are you sure you want to remove this transaction from the import?
+    {{-- Single shared Remove Transaction Modal --}}
+    @php $deletingTransaction = $deletingTransactionId ? $transactions->find($deletingTransactionId) : null; @endphp
+    <flux:modal
+        name="confirm-remove-transaction"
+        x-on:open-delete-modal.window="$flux.modal('confirm-remove-transaction').show()"
+        x-on:close-delete-modal.window="$flux.modal('confirm-remove-transaction').close()"
+        focusable
+        class="max-w-lg"
+    >
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Remove Transaction</flux:heading>
+                <flux:subheading>
+                    Are you sure you want to remove this transaction from the import?
+                    @if ($deletingTransaction)
                         <br><br>
-                        <strong>{{ $transaction->description }}</strong> - £{{ number_format(abs($transaction->amount), 2) }}
+                        <strong>{{ $deletingTransaction->description }}</strong> - £{{ number_format(abs($deletingTransaction->amount), 2) }}
                         <br><br>
-                        This will permanently remove the transaction from this import.
-                    </flux:subheading>
-                </div>
-
-                <div class="flex justify-end space-x-2 rtl:space-x-reverse">
-                    <flux:modal.close>
-                        <flux:button variant="filled">Cancel</flux:button>
-                    </flux:modal.close>
-
-                    <flux:button variant="danger" wire:click="deleteTransaction({{ $transaction->id }})">
-                        Remove Transaction
-                    </flux:button>
-                </div>
+                    @endif
+                    This will permanently remove the transaction from this import.
+                </flux:subheading>
             </div>
-        </flux:modal>
-    @endforeach
+
+            <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+                <flux:modal.close>
+                    <flux:button variant="filled">Cancel</flux:button>
+                </flux:modal.close>
+
+                <flux:button variant="danger" wire:click="deleteTransaction">
+                    Remove Transaction
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>
