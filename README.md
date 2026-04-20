@@ -4,7 +4,7 @@
 Laravel Finance Tracker is a personal budgeting and finance dashboard built with the Laravel 12 Livewire starter kit. It lets authenticated users record transactions, group them into categories, set monthly budgets, track net worth entries, and review reports that summarise income vs. expenses over time. All data is scoped per user.
 
 - **Framework:** Laravel 12 with Fortify authentication, Livewire 3, and Volt/Flux for server-driven UI components.
-- **Language:** PHP 8.2+ (tested in CI on PHP 8.4).
+- **Language:** PHP 8.4+.
 - **Frontend:** Blade-based Livewire views enhanced by Volt components; assets compiled with Vite, Tailwind CSS, and the Laravel Vite plugin.
 - **Database:** SQLite by default for easy local setup (switchable to MySQL/PostgreSQL via `.env`).
 - **Tooling:** Composer for PHP dependencies, npm for frontend tooling, and bundled scripts for setup, development, testing, and asset builds.
@@ -33,7 +33,7 @@ Laravel Finance Tracker is a personal budgeting and finance dashboard built with
 5. **Views and layout:** Components render Blade templates under `resources/views/livewire`, wrapped in a shared layout (`components.layouts.app`) that wires Livewire/Volt assets, Tailwind styles, and Vite-built scripts for a cohesive UI.
 
 ## Running the Project Locally
-1. **Prerequisites:** PHP 8.2+, Composer, Node 22, npm, and SQLite (default).  
+1. **Prerequisites:** PHP 8.4+, Composer, Node 22, npm, and SQLite (default).  
 2. **Clone the repository:**
    ```bash
    git clone ... # use preferred method (HTTPS/SSH)
