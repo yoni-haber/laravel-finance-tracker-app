@@ -23,11 +23,13 @@ class BankStatementImportProcessor
             return true;
         }
 
-        // Atomically claim the import by transitioning from uploaded → parsing.
-        // This prevents two queue workers from processing the same import simultaneously.
+        // Atomically claim the import by transitioning to parsing.
+        // Only STATUS_UPLOADED and STATUS_FAILED are claimable — STATUS_PARSING means
+        // another worker already holds the claim and we must not proceed concurrently.
+        // STATUS_FAILED is included so a re-dispatched job can recover after total failure.
         $claimed = BankStatementImport::where('id', $this->import->id)
-            ->whereIn('status', [BankStatementConfig::STATUS_UPLOADED, BankStatementConfig::STATUS_PARSING])
-            ->update(['status' => BankStatementConfig::STATUS_PARSING, 'updated_at' => now()]);
+            ->whereIn('status', [BankStatementConfig::STATUS_UPLOADED, BankStatementConfig::STATUS_FAILED])
+            ->update(['status' => BankStatementConfig::STATUS_PARSING]);
 
         if (! $claimed) {
             // Another worker already claimed it or it's in a non-processable state.
@@ -72,10 +74,9 @@ class BankStatementImportProcessor
         $detector = new DuplicateDetector($this->import->user_id);
         $detector->detectDuplicates($transactions);
 
-        // Step 4: Save imported transactions
+        // Step 4: Save imported transactions and mark parsed — both in one transaction
+        // so a crash between the two operations cannot leave the import in an inconsistent state.
         $this->saveImportedTransactions($transactions);
-
-        $this->import->update(['status' => BankStatementConfig::STATUS_PARSED]);
 
         return true;
     }
@@ -101,11 +102,17 @@ class BankStatementImportProcessor
     }
 
     /**
-     * Save imported transactions to database
+     * Save imported transactions to database and mark the import as parsed,
+     * all within a single transaction so the two operations are atomic.
+     * Any existing rows are deleted first so re-processing after STATUS_FAILED
+     * cannot produce duplicate staged transactions.
      */
     private function saveImportedTransactions($transactions): void
     {
         DB::transaction(function () use ($transactions) {
+            // Clear any rows from a previous failed attempt before re-inserting.
+            $this->import->importedTransactions()->delete();
+
             $transactions->chunk(BankStatementConfig::TRANSACTION_CHUNK_SIZE)
                 ->each(function ($chunk) {
                     $data = $chunk->map(function ($transaction) {
@@ -125,6 +132,8 @@ class BankStatementImportProcessor
 
                     $this->import->importedTransactions()->insert($data);
                 });
+
+            $this->import->update(['status' => BankStatementConfig::STATUS_PARSED]);
         });
     }
 }

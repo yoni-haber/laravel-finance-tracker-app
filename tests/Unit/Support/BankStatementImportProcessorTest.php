@@ -304,6 +304,94 @@ class BankStatementImportProcessorTest extends TestCase
             ]);
     }
 
+    public function test_skips_processing_when_status_is_parsing(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create([
+            'config' => [
+                'columns' => ['date' => 0, 'description' => 1, 'amount' => 2],
+                'date_format' => 'd/m/Y',
+                'has_header' => true,
+            ],
+        ]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create([
+            'status' => BankStatementConfig::STATUS_PARSING,
+        ]);
+
+        Storage::fake('local');
+        Storage::put("statements/{$import->id}.csv", "Date,Description,Amount\n01/01/2026,Test,100.00");
+
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
+
+        // STATUS_PARSING is treated as "already claimed by another worker" — skip, not an error.
+        $this->assertFalse($result);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSING, $import->fresh()->status);
+        $this->assertCount(0, $import->fresh()->importedTransactions);
+    }
+
+    public function test_can_reprocess_after_failed_status(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create([
+            'config' => [
+                'columns' => ['date' => 0, 'description' => 1, 'amount' => 2],
+                'date_format' => 'd/m/Y',
+                'has_header' => true,
+            ],
+        ]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create([
+            'status' => BankStatementConfig::STATUS_FAILED,
+        ]);
+
+        Storage::fake('local');
+        Storage::put("statements/{$import->id}.csv", "Date,Description,Amount\n01/01/2026,Test,100.00");
+
+        $processor = new BankStatementImportProcessor($import);
+        $result = $processor->process();
+
+        $this->assertTrue($result);
+        $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
+        $this->assertCount(1, $import->fresh()->importedTransactions);
+    }
+
+    public function test_reprocessing_after_failed_clears_orphaned_rows(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create([
+            'config' => [
+                'columns' => ['date' => 0, 'description' => 1, 'amount' => 2],
+                'date_format' => 'd/m/Y',
+                'has_header' => true,
+            ],
+        ]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create([
+            'status' => BankStatementConfig::STATUS_FAILED,
+        ]);
+
+        // Simulate orphaned rows left by a previous failed attempt
+        $import->importedTransactions()->create([
+            'date' => '2026-01-01',
+            'description' => 'ORPHANED ROW',
+            'amount' => 99.00,
+            'hash' => 'orphaned-hash',
+            'original_hash' => 'orphaned-hash',
+            'is_duplicate' => false,
+            'is_committed' => false,
+        ]);
+
+        Storage::fake('local');
+        Storage::put("statements/{$import->id}.csv", "Date,Description,Amount\n01/01/2026,Test,100.00");
+
+        $processor = new BankStatementImportProcessor($import);
+        $processor->process();
+
+        // Orphaned rows cleared; only the freshly parsed row should exist.
+        $transactions = $import->fresh()->importedTransactions;
+        $this->assertCount(1, $transactions);
+        $this->assertEquals('TEST', $transactions->first()->description);
+    }
+
     public function test_handles_missing_amount_columns(): void
     {
         $user = User::factory()->create();

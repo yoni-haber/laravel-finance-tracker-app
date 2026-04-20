@@ -10,7 +10,9 @@ use App\Support\StatementImportCommitter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -76,7 +78,7 @@ class StatementImportReview extends Component
 
         $transaction = $this->import->importedTransactions()->findOrFail($this->editingTransactionId);
 
-        $normalizedDescription = strtoupper(trim($this->editForm['description']));
+        $normalizedDescription = Str::squish(Str::upper($this->editForm['description']));
 
         $amount = $this->editForm['type'] === Transaction::TYPE_EXPENSE
             ? -abs((float) $this->editForm['amount'])
@@ -109,6 +111,12 @@ class StatementImportReview extends Component
 
     public function updateCategory(int $transactionId, ?int $categoryId): void
     {
+        if ($categoryId !== null && ! Category::where('id', $categoryId)->where('user_id', Auth::id())->exists()) {
+            throw ValidationException::withMessages([
+                'categoryId' => 'The selected category is invalid.',
+            ]);
+        }
+
         $transaction = $this->import->importedTransactions()->findOrFail($transactionId);
         $transaction->update(['category_id' => $categoryId]);
     }

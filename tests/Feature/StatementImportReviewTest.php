@@ -378,6 +378,37 @@ class StatementImportReviewTest extends TestCase
         $this->assertEquals($expectedHash, $transaction->hash);
     }
 
+    public function test_description_internal_whitespace_is_collapsed_on_edit(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create([
+            'date' => '2026-01-01',
+            'description' => 'ORIGINAL',
+            'amount' => 100.00,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('editTransaction', $transaction->id)
+            ->set('editForm.description', '  tesco   extra  ') // extra internal and surrounding whitespace
+            ->set('editForm.amount', '100.00')
+            ->set('editForm.type', Transaction::TYPE_INCOME)
+            ->call('updateTransaction');
+
+        $transaction->refresh();
+
+        // Str::squish collapses internal whitespace; should match parser output
+        $this->assertEquals('TESCO EXTRA', $transaction->description);
+
+        // Hash must be identical to what the parser would produce for the same raw description
+        $detector = new \App\Support\BankStatement\DuplicateDetector($user->id);
+        $expectedHash = $detector->generateTransactionHash($user->id, '2026-01-01', 100.00, 'TESCO EXTRA');
+        $this->assertEquals($expectedHash, $transaction->hash);
+    }
+
     public function test_category_validation_is_scoped_to_authenticated_user(): void
     {
         $user = User::factory()->create();
@@ -470,6 +501,24 @@ class StatementImportReviewTest extends TestCase
         Livewire::actingAs($user)
             ->test(StatementImportReview::class, ['importId' => $import->id])
             ->call('updateCategory', $transaction->id, null);
+
+        $this->assertNull($transaction->fresh()->category_id);
+    }
+
+    public function test_update_category_rejects_another_users_category(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $otherCategory = Category::factory()->for($otherUser)->create();
+
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['category_id' => null]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('updateCategory', $transaction->id, $otherCategory->id)
+            ->assertHasErrors(['categoryId']);
 
         $this->assertNull($transaction->fresh()->category_id);
     }

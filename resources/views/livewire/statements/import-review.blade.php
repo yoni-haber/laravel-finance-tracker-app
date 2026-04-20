@@ -228,10 +228,7 @@
                                         >
                                             <option value="">Uncategorised</option>
                                             @foreach ($categories as $category)
-                                                @php 
-                                                    $selected = $transaction->external_id === "category:{$category->id}";
-                                                @endphp
-                                                <option value="{{ $category->id }}" {{ $selected ? 'selected' : '' }}>
+                                                <option value="{{ $category->id }}" @selected($transaction->category_id == $category->id)>
                                                     {{ $category->name }}
                                                 </option>
                                             @endforeach
