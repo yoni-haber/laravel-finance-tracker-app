@@ -272,4 +272,44 @@ class ParseBankStatementJobTest extends TestCase
         // Should not create additional transactions
         $this->assertCount(1, $import->fresh()->importedTransactions);
     }
+
+    public function test_failed_marks_import_as_failed(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create();
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
+
+        $job = new ParseBankStatementJob($import->id);
+        $job->failed(new \RuntimeException('Something went wrong'));
+
+        $this->assertEquals(BankStatementConfig::STATUS_FAILED, $import->fresh()->status);
+    }
+
+    public function test_failed_is_a_no_op_when_import_not_found(): void
+    {
+        $job = new ParseBankStatementJob(99999);
+
+        // Should not throw — import simply does not exist
+        $job->failed(new \RuntimeException('Boom'));
+
+        $this->assertTrue(true); // reached without exception
+    }
+
+    public function test_skips_committed_imports(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create([
+            'config' => ['columns' => ['date' => 0, 'description' => 1, 'amount' => 2], 'has_header' => false],
+        ]);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')
+            ->create(['status' => BankStatementConfig::STATUS_COMMITTED]);
+
+        Storage::fake('local');
+
+        $job = new ParseBankStatementJob($import->id);
+        $job->handle();
+
+        // Status should be unchanged — committed imports are skipped
+        $this->assertEquals(BankStatementConfig::STATUS_COMMITTED, $import->fresh()->status);
+    }
 }

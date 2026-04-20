@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Support\BankStatementConfig;
 use App\Support\StatementImportCommitter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class StatementImportCommitterTest extends TestCase
@@ -243,5 +245,83 @@ class StatementImportCommitterTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(0, Transaction::where('user_id', $user->id)->get());
         $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
+    }
+
+    public function test_get_summary_returns_correct_counts(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create();
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        ImportedTransaction::factory()->for($import)->create(['is_duplicate' => false, 'is_committed' => true, 'amount' => 100.00]);
+        ImportedTransaction::factory()->for($import)->create(['is_duplicate' => false, 'is_committed' => false, 'amount' => 50.00]);
+        ImportedTransaction::factory()->for($import)->create(['is_duplicate' => true, 'is_committed' => false, 'amount' => 75.00]);
+
+        $committer = new StatementImportCommitter($import);
+        $summary = $committer->getSummary();
+
+        $this->assertEquals(3, $summary['total']);
+        $this->assertEquals(1, $summary['duplicates']);
+        $this->assertEquals(2, $summary['new_transactions']);
+        $this->assertEquals(150.00, $summary['total_amount']); // only non-duplicates
+        $this->assertEquals(1, $summary['committed']);
+    }
+
+    public function test_deletes_csv_file_after_successful_commit(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        // Place a fake CSV file where the committer expects it
+        Storage::put("statements/{$import->id}.csv", 'fake,csv,content');
+        Storage::assertExists("statements/{$import->id}.csv");
+
+        ImportedTransaction::factory()->for($import)->create(['is_duplicate' => false, 'amount' => 10.00]);
+
+        $committer = new StatementImportCommitter($import);
+        $result = $committer->commit();
+
+        $this->assertTrue($result);
+        Storage::assertMissing("statements/{$import->id}.csv");
+    }
+
+    public function test_commit_succeeds_when_no_csv_file_exists(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        ImportedTransaction::factory()->for($import)->create(['is_duplicate' => false, 'amount' => 10.00]);
+
+        $committer = new StatementImportCommitter($import);
+        $result = $committer->commit();
+
+        $this->assertTrue($result); // no file to delete is fine
+        $this->assertEquals(BankStatementConfig::STATUS_COMMITTED, $import->fresh()->status);
+    }
+
+    public function test_commit_succeeds_even_when_csv_delete_throws(): void
+    {
+        Log::spy();
+        Storage::fake('local');
+        Storage::shouldReceive('exists')->andReturn(true);
+        Storage::shouldReceive('delete')->andThrow(new \RuntimeException('Disk error'));
+
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        ImportedTransaction::factory()->for($import)->create(['is_duplicate' => false, 'amount' => 10.00]);
+
+        $committer = new StatementImportCommitter($import);
+        $result = $committer->commit();
+
+        $this->assertTrue($result);
+        Log::shouldHaveReceived('warning')->once();
     }
 }

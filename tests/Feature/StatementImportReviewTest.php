@@ -426,4 +426,62 @@ class StatementImportReviewTest extends TestCase
 
         $this->assertDatabaseMissing('imported_transactions', ['id' => $transaction->id]);
     }
+
+    public function test_cancel_edit_clears_state(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['amount' => 50.00]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('editTransaction', $transaction->id)
+            ->assertSet('editingTransactionId', $transaction->id)
+            ->call('cancelEdit')
+            ->assertSet('editingTransactionId', null)
+            ->assertSet('editForm', []);
+    }
+
+    public function test_delete_transaction_with_null_deleting_id_only_closes_modal(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create();
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('deleteTransaction') // no confirmDeleteTransaction called first
+            ->assertSet('deletingTransactionId', null)
+            ->assertDispatched('close-delete-modal');
+
+        $this->assertDatabaseHas('imported_transactions', ['id' => $transaction->id]);
+    }
+
+    public function test_update_category_to_null_clears_it(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['category_id' => $category->id]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('updateCategory', $transaction->id, null);
+
+        $this->assertNull($transaction->fresh()->category_id);
+    }
+
+    public function test_mount_redirects_when_import_is_not_parsed(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_UPLOADED]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->assertRedirect(route('statements.import'));
+    }
 }
