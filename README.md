@@ -63,6 +63,134 @@ Laravel Finance Tracker is a personal budgeting and finance dashboard built with
    ```
 7. **Visit the app:** Open `http://localhost:8000` and register a user to start tracking income, expenses, budgets, and net worth entries.
 
+## Developer Commands
+
+### Composer Scripts
+These scripts orchestrate the most common workflows:
+
+| Command | What it does |
+|---|---|
+| `composer setup` | Full one-shot setup: install PHP & JS deps, copy `.env`, generate app key, run migrations, build assets |
+| `composer dev` | Starts all four dev processes concurrently: `artisan serve`, queue listener, `pail` log viewer, and Vite |
+| `composer test` | Clears config cache then runs the full PHPUnit suite |
+
+### Database
+```bash
+# Run outstanding migrations
+php artisan migrate
+
+# Wipe the database and re-run all migrations from scratch
+php artisan migrate:fresh
+
+# Wipe and re-run migrations, then seed
+php artisan migrate:fresh --seed
+
+# Roll back the most recent batch of migrations
+php artisan migrate:rollback
+
+# Roll back a specific number of batches
+php artisan migrate:rollback --step=2
+
+# Show migration status
+php artisan migrate:status
+```
+
+### Queue
+The app uses the `database` queue driver. `ParseBankStatementJob` is dispatched when a CSV is uploaded and handles parsing with 3 retries and a 60-second timeout.
+
+```bash
+# Start a persistent queue worker (for production-like environments)
+php artisan queue:work
+
+# Start a queue listener that respawns after each job (useful during development)
+php artisan queue:listen
+
+# Process a single job then stop
+php artisan queue:work --once
+
+# Show all failed jobs
+php artisan queue:failed
+
+# Retry a specific failed job by its ID
+php artisan queue:retry <id>
+
+# Retry all failed jobs
+php artisan queue:retry all
+
+# Delete a specific failed job
+php artisan queue:forget <id>
+
+# Clear all failed jobs
+php artisan queue:flush
+
+# Monitor queue sizes (useful for spotting backlogs)
+php artisan queue:monitor database:10
+
+# Dispatch ParseBankStatementJob manually for a given import ID (useful for debugging)
+php artisan tinker --execute="App\Jobs\ParseBankStatementJob::dispatch(<import_id>);"
+
+# Reset a stuck import back to 'uploaded' so the job will re-process it
+php artisan tinker --execute="App\Models\BankStatementImport::find(<id>)->update(['status' => 'uploaded']);"
+```
+
+### Cache & Config
+```bash
+# Clear all caches in one go
+php artisan optimize:clear
+
+# Clear individual caches
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+
+# Re-cache config and routes for production
+php artisan optimize
+```
+
+### Tinker (REPL)
+```bash
+# Open an interactive REPL with the full app context
+php artisan tinker
+
+# Useful one-liners:
+# Count transactions for the first user
+App\Models\Transaction::where('user_id', 1)->count();
+
+# Inspect an import and its status
+App\Models\BankStatementImport::with('importedTransactions')->find(<id>);
+
+# Inspect failed imported transactions in an import
+App\Models\ImportedTransaction::where('import_id', <id>)->where('is_committed', false)->get();
+```
+
+### Code Quality
+```bash
+# Fix code style (Laravel Pint)
+vendor/bin/pint
+
+# Check style without making changes (useful in CI)
+vendor/bin/pint --test
+
+# Run static analysis (PHPStan)
+vendor/bin/phpstan
+
+# Run tests with code coverage (requires Xdebug or PCOV)
+php artisan test --coverage
+```
+
+### Logs
+```bash
+# Tail logs in the terminal (used automatically by composer dev)
+php artisan pail
+
+# Tail and filter to a specific level
+php artisan pail --level=error
+
+# Filter logs to queue/import-related messages
+php artisan pail --filter="bank statement"
+```
+
 ## GitHub Actions / CI
 The repository includes multiple workflows to keep quality high and demonstrate CI/CD practices:
 - **Tests (`tests.yml`):** Installs PHP 8.4 and Node 22, builds assets, and runs PHPUnit to guard core flows like authentication and finance operations.
