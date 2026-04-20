@@ -18,7 +18,7 @@ use Livewire\Component;
 #[Title('Transactions')]
 class TransactionManager extends Component
 {
-    public string $type = 'expense';
+    public string $type = Transaction::TYPE_EXPENSE;
 
     public string $amount = '0.00';
 
@@ -162,7 +162,7 @@ class TransactionManager extends Component
     public function resetForm(): void
     {
         $this->transactionId = null;
-        $this->type = 'expense';
+        $this->type = Transaction::TYPE_EXPENSE;
         $this->amount = '0.00';
         $this->description = null;
         $this->category_id = null;

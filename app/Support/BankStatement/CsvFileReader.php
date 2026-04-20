@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Support\BankStatement;
+
+use App\Models\BankProfile;
+use App\Support\BankStatementConfig;
+use Exception;
+use Illuminate\Support\Collection;
+use SplFileObject;
+
+class CsvFileReader
+{
+    public function __construct(
+        private string $filePath,
+        private ?BankProfile $profile = null
+    ) {}
+
+    /**
+     * Read CSV file and return filtered rows
+     */
+    public function readRows(): Collection
+    {
+        if (! file_exists($this->filePath)) {
+            throw new Exception('CSV file not found: '.$this->filePath);
+        }
+
+        $file = new SplFileObject($this->filePath, 'r');
+
+        $rows = collect();
+        $isFirstRow = true;
+        $hasHeader = $this->profile ? ($this->profile->config['has_header'] ?? BankStatementConfig::CSV_HAS_HEADER_DEFAULT) : BankStatementConfig::CSV_HAS_HEADER_DEFAULT;
+
+        while (! $file->eof()) {
+            $row = $file->fgetcsv(separator: ',', enclosure: '"', escape: '');
+
+            if ($isFirstRow && $hasHeader) {
+                $isFirstRow = false;
+
+                continue;
+            }
+
+            $isFirstRow = false;
+
+            if (! $row || count(array_filter($row)) === 0) {
+                continue;
+            }
+
+            $rows->push($row);
+        }
+
+        return $rows;
+    }
+}

@@ -172,7 +172,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Salary'],
-                'type' => 'income',
+                'type' => Transaction::TYPE_INCOME,
                 'amount' => 5500.00,
                 'date' => $now->copy()->subMonths(1)->startOfMonth(),
                 'is_recurring' => true,
@@ -183,7 +183,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Freelance'],
-                'type' => 'income',
+                'type' => Transaction::TYPE_INCOME,
                 'amount' => 850.00,
                 'date' => $now->copy()->subWeeks(2),
                 'is_recurring' => false,
@@ -196,7 +196,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Housing'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 1750.00,
                 'date' => $now->copy()->startOfMonth(),
                 'is_recurring' => true,
@@ -207,7 +207,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Utilities'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 95.40,
                 'date' => $now->copy()->subMonth()->startOfMonth()->addDays(5),
                 'is_recurring' => false,
@@ -218,7 +218,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Utilities'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 0.00,
                 'date' => $now->copy()->startOfMonth()->addDays(5),
                 'is_recurring' => false,
@@ -231,7 +231,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Groceries'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 125.80,
                 'date' => $now->copy()->subDays(10),
                 'is_recurring' => false,
@@ -242,7 +242,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Entertainment'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 64.99,
                 'date' => $now->copy()->subDays(3),
                 'is_recurring' => false,
@@ -253,7 +253,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Travel'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 480.00,
                 'date' => $now->copy()->addMonths(1)->startOfMonth(),
                 'is_recurring' => false,
@@ -266,7 +266,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $alex,
                 'category' => $categories['alex']['Savings'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 300.00,
                 'date' => $now->copy()->startOfMonth()->addDays(2),
                 'is_recurring' => true,
@@ -279,7 +279,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $jamie,
                 'category' => $categories['jamie']['Consulting'],
-                'type' => 'income',
+                'type' => Transaction::TYPE_INCOME,
                 'amount' => 3200.00,
                 'date' => $now->copy()->subMonths(2)->startOfMonth()->addDays(7),
                 'is_recurring' => true,
@@ -290,7 +290,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $jamie,
                 'category' => $categories['jamie']['Living'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 900.00,
                 'date' => $now->copy()->subMonth()->addDays(1),
                 'is_recurring' => true,
@@ -301,7 +301,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $jamie,
                 'category' => $categories['jamie']['Education'],
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 200.00,
                 'date' => $now->copy()->addMonths(1)->startOfMonth()->addDays(12),
                 'is_recurring' => false,
@@ -312,7 +312,7 @@ class UserAndFinanceSeeder extends Seeder
             [
                 'user' => $jamie,
                 'category' => null,
-                'type' => 'expense',
+                'type' => Transaction::TYPE_EXPENSE,
                 'amount' => 45.00,
                 'date' => $now->copy()->subDays(6),
                 'is_recurring' => false,
