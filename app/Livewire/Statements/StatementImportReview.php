@@ -178,7 +178,7 @@ class StatementImportReview extends Component
             if ($success) {
                 session()->flash('status', 'Transactions imported successfully.');
 
-                return redirect()->route('transactions');
+                return redirect()->route('statements.import');
             } else {
                 $this->addError('commit', 'Failed to import transactions. Please try again.');
             }

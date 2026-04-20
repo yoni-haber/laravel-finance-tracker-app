@@ -223,7 +223,7 @@ class StatementImportReviewTest extends TestCase
         Livewire::actingAs($user)
             ->test(StatementImportReview::class, ['importId' => $import->id])
             ->call('commitImport')
-            ->assertRedirect(route('transactions'));
+            ->assertRedirect(route('statements.import'));
 
         // Check import status
         $import->refresh();
