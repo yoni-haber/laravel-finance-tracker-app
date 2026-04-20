@@ -1,7 +1,7 @@
 # Laravel Finance Tracker
 
 ## Project Overview
-Laravel Finance Tracker is a personal budgeting and finance dashboard built with the Laravel 12 Livewire starter kit. It lets a single authenticated user record transactions, group them into categories, set monthly budgets, track net worth entries, and review reports that summarise income vs. expenses over time.
+Laravel Finance Tracker is a personal budgeting and finance dashboard built with the Laravel 12 Livewire starter kit. It lets authenticated users record transactions, group them into categories, set monthly budgets, track net worth entries, and review reports that summarise income vs. expenses over time. All data is scoped per user.
 
 - **Framework:** Laravel 12 with Fortify authentication, Livewire 3, and Volt/Flux for server-driven UI components.
 - **Language:** PHP 8.2+ (tested in CI on PHP 8.4).
@@ -33,7 +33,7 @@ Laravel Finance Tracker is a personal budgeting and finance dashboard built with
 5. **Views and layout:** Components render Blade templates under `resources/views/livewire`, wrapped in a shared layout (`components.layouts.app`) that wires Livewire/Volt assets, Tailwind styles, and Vite-built scripts for a cohesive UI.
 
 ## Running the Project Locally
-1. **Prerequisites:** PHP 8.2+, Composer, Node 20+ (works with Node 22 in CI), npm, and SQLite (default).  
+1. **Prerequisites:** PHP 8.2+, Composer, Node 22, npm, and SQLite (default).  
 2. **Clone the repository:**
    ```bash
    git clone https://github.com/your-username/laravel-finance-tracker-app.git
@@ -71,7 +71,7 @@ These scripts orchestrate the most common workflows:
 | Command | What it does |
 |---|---|
 | `composer setup` | Full one-shot setup: install PHP & JS deps, copy `.env`, generate app key, run migrations, build assets |
-| `composer dev` | Starts all four dev processes concurrently: `artisan serve`, queue listener, `pail` log viewer, and Vite |
+| `composer dev` | Starts all four dev processes concurrently: `artisan serve`, queue listener (`--tries=1`), `pail` log viewer, and Vite |
 | `composer test` | Clears config cache then runs the full PHPUnit suite |
 
 ### Database
