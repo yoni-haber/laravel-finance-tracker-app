@@ -25,7 +25,6 @@ class CsvFileReader
         }
 
         $file = new SplFileObject($this->filePath, 'r');
-        $file->setFlags(SplFileObject::READ_CSV);
 
         $rows = collect();
         $isFirstRow = true;
@@ -34,23 +33,19 @@ class CsvFileReader
         while (! $file->eof()) {
             $row = $file->fgetcsv();
 
-            // Skip header row if it exists
             if ($isFirstRow && $hasHeader) {
                 $isFirstRow = false;
 
                 continue;
             }
 
-            // Skip empty rows if configured
-            if (BankStatementConfig::CSV_SKIP_EMPTY_ROWS && (! $row || count(array_filter($row)) === 0)) {
+            $isFirstRow = false;
+
+            if (! $row || count(array_filter($row)) === 0) {
                 continue;
             }
 
-            if ($row && count(array_filter($row)) > 0) {
-                $rows->push($row);
-            }
-
-            $isFirstRow = false;
+            $rows->push($row);
         }
 
         return $rows;

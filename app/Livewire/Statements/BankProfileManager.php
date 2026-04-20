@@ -33,6 +33,7 @@ class BankProfileManager extends Component
             'form.debit_column' => $this->hasSeparateColumns ? 'required|integer|min:1' : 'nullable',
             'form.credit_column' => $this->hasSeparateColumns ? 'required|integer|min:1' : 'nullable',
             'form.date_format' => 'required|string|in:'.implode(',', BankStatementConfig::SUPPORTED_DATE_FORMATS),
+            'form.has_header' => 'boolean',
         ];
     }
 
@@ -47,6 +48,7 @@ class BankProfileManager extends Component
             'form.debit_column' => 'debit column',
             'form.credit_column' => 'credit column',
             'form.date_format' => 'date format',
+            'form.has_header' => 'has header row',
         ];
     }
 
@@ -73,13 +75,13 @@ class BankProfileManager extends Component
         $this->form = [
             'name' => $profile->name,
             'statement_type' => $profile->statement_type ?? 'bank',
-            // convert to 1-based by +1
             'date_column' => ($config['columns']['date'] ?? 0) + 1,
             'description_column' => ($config['columns']['description'] ?? 1) + 1,
             'amount_column' => isset($config['columns']['amount']) ? $config['columns']['amount'] + 1 : null,
             'debit_column' => isset($config['columns']['debit']) ? $config['columns']['debit'] + 1 : null,
             'credit_column' => isset($config['columns']['credit']) ? $config['columns']['credit'] + 1 : null,
             'date_format' => $config['date_format'] ?? 'd/m/Y',
+            'has_header' => $config['has_header'] ?? BankStatementConfig::CSV_HAS_HEADER_DEFAULT,
         ];
 
         $this->showCreateForm = true;
@@ -114,6 +116,7 @@ class BankProfileManager extends Component
                 'credit' => $this->hasSeparateColumns && $this->form['credit_column'] ? $this->form['credit_column'] - 1 : null,
             ], fn ($value) => $value !== null),
             'date_format' => $this->form['date_format'],
+            'has_header' => (bool) $this->form['has_header'],
         ];
 
         if ($this->editingProfile) {
@@ -171,6 +174,7 @@ class BankProfileManager extends Component
             'debit_column' => null,
             'credit_column' => null,
             'date_format' => 'd/m/Y',
+            'has_header' => BankStatementConfig::CSV_HAS_HEADER_DEFAULT,
         ];
     }
 

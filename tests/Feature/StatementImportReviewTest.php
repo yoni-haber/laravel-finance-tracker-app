@@ -128,7 +128,7 @@ class StatementImportReviewTest extends TestCase
         $transaction->refresh();
         $this->assertEquals('UPDATED DESCRIPTION', $transaction->description);
         $this->assertEquals(150.00, $transaction->amount);
-        $this->assertEquals("category:{$category->id}", $transaction->external_id);
+        $this->assertEquals($category->id, $transaction->category_id);
     }
 
     public function test_applies_transaction_type_correctly_for_bank_statements(): void
@@ -183,7 +183,7 @@ class StatementImportReviewTest extends TestCase
             ->call('updateCategory', $transaction->id, $category->id);
 
         $transaction->refresh();
-        $this->assertEquals("category:{$category->id}", $transaction->external_id);
+        $this->assertEquals($category->id, $transaction->category_id);
     }
 
     public function test_updates_transaction_type(): void
@@ -212,7 +212,7 @@ class StatementImportReviewTest extends TestCase
         ImportedTransaction::factory()->for($import, 'bankStatementImport')->create([
             'amount' => 100.00,
             'is_duplicate' => false,
-            'external_id' => "category:{$category->id}",
+            'category_id' => $category->id,
         ]);
 
         ImportedTransaction::factory()->for($import, 'bankStatementImport')->create([
@@ -345,5 +345,54 @@ class StatementImportReviewTest extends TestCase
         $transaction->refresh();
         $this->assertNotEquals($originalHash, $transaction->hash);
         $this->assertNotNull($transaction->hash);
+    }
+
+    public function test_hash_uses_normalized_description_after_edit(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create([
+            'date' => '2026-01-01',
+            'description' => 'ORIGINAL',
+            'amount' => 100.00,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('editTransaction', $transaction->id)
+            ->set('editForm.description', 'my purchase') // lowercase input
+            ->set('editForm.amount', '100.00')
+            ->set('editForm.type', Transaction::TYPE_INCOME)
+            ->call('updateTransaction');
+
+        $transaction->refresh();
+
+        // Description should be uppercased
+        $this->assertEquals('MY PURCHASE', $transaction->description);
+
+        // Hash must match what would be generated from the normalized (uppercased) description
+        $detector = new \App\Support\BankStatement\DuplicateDetector($user->id);
+        $expectedHash = $detector->generateTransactionHash($user->id, '2026-01-01', 100.00, 'MY PURCHASE');
+        $this->assertEquals($expectedHash, $transaction->hash);
+    }
+
+    public function test_category_validation_is_scoped_to_authenticated_user(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $otherCategory = Category::factory()->for($otherUser)->create();
+
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['amount' => 50.00]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('editTransaction', $transaction->id)
+            ->set('editForm.category_id', $otherCategory->id)
+            ->call('updateTransaction')
+            ->assertHasErrors(['editForm.category_id']);
     }
 }

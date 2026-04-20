@@ -265,10 +265,8 @@ class ParseBankStatementJobTest extends TestCase
         Storage::put("statements/{$import->id}.csv", '01/01/2026,Test,100');
 
         $job = new ParseBankStatementJob($import->id);
-        $result = $job->handle();
+        $job->handle(); // handle() is now void — no return value to assert
 
-        // Should return early without processing
-        $this->assertTrue($result);
         $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
 
         // Should not create additional transactions

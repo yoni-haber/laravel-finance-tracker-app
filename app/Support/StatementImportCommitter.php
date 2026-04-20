@@ -41,7 +41,7 @@ class StatementImportCommitter
                     // but Transaction table should store positive amounts for expenses
                     $amount = $importedTransaction->amount;
 
-                    if ($this->import->bankProfile && $this->import->bankProfile->isCreditCardStatement()) {
+                    if ($this->import->isCreditCardStatement()) {
                         // Credit card: flip back to positive amounts, determine type from original CSV logic
                         $isExpense = $amount < 0; // Negative imported amount = expense
                         $amount = abs($amount); // Store positive amount
@@ -52,20 +52,14 @@ class StatementImportCommitter
                         $amount = abs($amount); // Ensure positive amounts for consistency
                     }
 
-                    // Extract category from external_id if set
-                    $categoryId = null;
-                    if ($importedTransaction->external_id && str_starts_with($importedTransaction->external_id, 'category:')) {
-                        $categoryId = (int) str_replace('category:', '', $importedTransaction->external_id);
-                    }
-
                     // Create real transaction
                     Transaction::create([
                         'user_id' => $this->import->user_id,
                         'date' => $importedTransaction->date,
                         'description' => $importedTransaction->description,
-                        'amount' => $amount, // Keep signed amount
+                        'amount' => $amount,
                         'type' => $type,
-                        'category_id' => $categoryId,
+                        'category_id' => $importedTransaction->category_id,
                         'is_recurring' => false,
                         'frequency' => null,
                         'recurring_until' => null,

@@ -10,6 +10,7 @@ use App\Support\StatementImportCommitter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -31,14 +32,14 @@ class StatementImportReview extends Component
             'editForm.amount' => 'required|numeric|min:0.01',
             'editForm.date' => 'required|date',
             'editForm.type' => 'required|in:income,expense',
-            'editForm.category_id' => 'nullable|exists:categories,id',
+            'editForm.category_id' => ['nullable', Rule::exists('categories', 'id')->where('user_id', Auth::id())],
         ];
     }
 
     public function mount(int $importId): void
     {
         try {
-            $this->import = BankStatementImport::with(['importedTransactions', 'bankProfile'])
+            $this->import = BankStatementImport::with(['bankProfile'])
                 ->forUser(Auth::id())
                 ->findOrFail($importId);
         } catch (ModelNotFoundException) {
@@ -60,10 +61,10 @@ class StatementImportReview extends Component
         $this->editingTransactionId = $transactionId;
         $this->editForm = [
             'description' => $transaction->description,
-            'amount' => (string) abs($transaction->amount), // Always show as positive
+            'amount' => (string) abs($transaction->amount),
             'date' => $transaction->date->toDateString(),
-            'type' => $this->determineTransactionType($transaction), // Use correct logic based on statement type
-            'category_id' => $this->extractCategoryId($transaction->external_id),
+            'type' => $this->determineTransactionType($transaction),
+            'category_id' => $transaction->category_id,
         ];
     }
 
@@ -73,35 +74,28 @@ class StatementImportReview extends Component
 
         $transaction = $this->import->importedTransactions()->findOrFail($this->editingTransactionId);
 
-        // Convert amount based on type selection and statement type
+        $normalizedDescription = strtoupper(trim($this->editForm['description']));
+
         $amount = $this->editForm['type'] === Transaction::TYPE_EXPENSE
-            ? -abs((float) $this->editForm['amount'])  // Expense = negative
+            ? -abs((float) $this->editForm['amount'])
             : abs((float) $this->editForm['amount']);
 
         $transaction->update([
-            'description' => strtoupper(trim($this->editForm['description'])),
+            'description' => $normalizedDescription,
             'amount' => $amount,
             'date' => $this->editForm['date'],
+            'category_id' => $this->editForm['category_id'] ?? null,
         ]);
 
-        // Update category assignment
-        $categoryId = $this->editForm['category_id'] ?? null;
-        $transaction->update([
-            'external_id' => $categoryId ? "category:{$categoryId}" : null,
-        ]);
-
-        // Regenerate hash using updated values
+        // Regenerate hash using the saved (normalized) values so it matches future imports
         $duplicateDetector = new DuplicateDetector($this->import->user_id);
         $hash = $duplicateDetector->generateTransactionHash(
             $this->import->user_id,
             $this->editForm['date'],
             $amount,
-            $this->editForm['description']
+            $normalizedDescription
         );
-        $isDuplicate = $duplicateDetector->isDuplicateExcluding(
-            $hash,
-            $transaction->id
-        );
+        $isDuplicate = $duplicateDetector->isDuplicateExcluding($hash, $transaction->id);
         $transaction->update([
             'hash' => $hash,
             'is_duplicate' => $isDuplicate,
@@ -113,39 +107,33 @@ class StatementImportReview extends Component
 
     public function updateCategory(int $transactionId, ?int $categoryId): void
     {
-        // Store category selection for use during commit
         $transaction = $this->import->importedTransactions()->findOrFail($transactionId);
-        $transaction->update(['external_id' => $categoryId ? "category:{$categoryId}" : null]);
+        $transaction->update(['category_id' => $categoryId]);
     }
 
     public function updateType(int $transactionId, string $type): void
     {
         $transaction = $this->import->importedTransactions()->findOrFail($transactionId);
 
-        // Convert amount based on type and statement type
         $amount = $type === Transaction::TYPE_EXPENSE
-            ? -abs($transaction->amount)  // Expense = negative
+            ? -abs($transaction->amount)
             : abs($transaction->amount);
 
         $transaction->update(['amount' => $amount]);
 
-        // Regenerate hash
+        // Regenerate hash using the explicit $amount variable, not the post-update model attribute
         $duplicateDetector = new DuplicateDetector($this->import->user_id);
         $hash = $duplicateDetector->generateTransactionHash(
             $this->import->user_id,
             $transaction->date,
-            $transaction->amount,
+            $amount,
             $transaction->description
         );
-        $isDuplicate = $duplicateDetector->isDuplicateExcluding(
-            $hash,
-            $transaction->id
-        );
+        $isDuplicate = $duplicateDetector->isDuplicateExcluding($hash, $transaction->id);
         $transaction->update([
             'hash' => $hash,
             'is_duplicate' => $isDuplicate,
         ]);
-
     }
 
     public function deleteTransaction(int $transactionId): void
@@ -154,24 +142,13 @@ class StatementImportReview extends Component
         session()->flash('status', 'Transaction removed from import.');
     }
 
-    private function extractCategoryId(?string $externalId): ?int
-    {
-        if ($externalId && str_starts_with($externalId, 'category:')) {
-            return (int) str_replace('category:', '', $externalId);
-        }
-
-        return null;
-    }
-
     private function determineTransactionType($transaction): string
     {
-        if ($this->import->bankProfile->isCreditCardStatement()) {
-            // Credit Card: Negative = Expense (purchases), Positive = Income (payments/refunds)
+        if ($this->import->isCreditCardStatement()) {
             return $transaction->amount < 0 ? Transaction::TYPE_EXPENSE : Transaction::TYPE_INCOME;
-        } else {
-            // Bank Statement: Positive = Income, Negative = Expense
-            return $transaction->amount >= 0 ? Transaction::TYPE_INCOME : Transaction::TYPE_EXPENSE;
         }
+
+        return $transaction->amount >= 0 ? Transaction::TYPE_INCOME : Transaction::TYPE_EXPENSE;
     }
 
     public function commitImport()

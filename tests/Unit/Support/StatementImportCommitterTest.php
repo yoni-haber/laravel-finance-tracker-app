@@ -24,13 +24,12 @@ class StatementImportCommitterTest extends TestCase
         $profile = BankProfile::factory()->create();
         $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
-        // Create imported transactions
         ImportedTransaction::factory()->for($import)->create([
             'date' => '2026-01-01',
             'description' => 'Test Transaction',
             'amount' => 100.50,
             'is_duplicate' => false,
-            'external_id' => "category:{$category->id}",
+            'category_id' => $category->id,
         ]);
 
         ImportedTransaction::factory()->for($import)->create([
@@ -46,7 +45,6 @@ class StatementImportCommitterTest extends TestCase
         $this->assertTrue($result);
         $this->assertEquals(BankStatementConfig::STATUS_COMMITTED, $import->fresh()->status);
 
-        // Should create Transaction for non-duplicate only
         $transactions = Transaction::where('user_id', $user->id)->get();
         $this->assertCount(1, $transactions);
 
@@ -56,12 +54,11 @@ class StatementImportCommitterTest extends TestCase
         $this->assertEquals(100.50, $transaction->amount);
         $this->assertTrue($transaction->category->is($category));
 
-        // ImportedTransactions should be marked as committed
         $committedImported = ImportedTransaction::where('is_committed', true)->get();
         $this->assertCount(1, $committedImported);
     }
 
-    public function test_handles_category_assignment_from_external_id(): void
+    public function test_handles_category_assignment_from_category_id(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -71,13 +68,13 @@ class StatementImportCommitterTest extends TestCase
         ImportedTransaction::factory()->for($import)->create([
             'amount' => 100.00,
             'is_duplicate' => false,
-            'external_id' => "category:{$category->id}",
+            'category_id' => $category->id,
         ]);
 
         ImportedTransaction::factory()->for($import)->create([
             'amount' => 50.00,
             'is_duplicate' => false,
-            'external_id' => null,
+            'category_id' => null,
         ]);
 
         $committer = new StatementImportCommitter($import);
@@ -86,11 +83,8 @@ class StatementImportCommitterTest extends TestCase
         $transactions = Transaction::where('user_id', $user->id)->orderBy('amount', 'desc')->get();
         $this->assertCount(2, $transactions);
 
-        // First transaction should have category
         $this->assertTrue($transactions->first()->category->is($category));
-
-        // Second transaction should have no category
-        $this->assertNull($transactions->last()->category);
+        $this->assertNull($transactions->last()->category_id);
     }
 
     public function test_determines_transaction_type_based_on_amount_and_statement_type(): void
@@ -236,23 +230,18 @@ class StatementImportCommitterTest extends TestCase
         $profile = BankProfile::factory()->create();
         $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
 
-        // Create imported transaction with invalid category reference
+        // category_id 99999 does not exist — Transaction::create() will fail the FK constraint
         ImportedTransaction::factory()->for($import)->create([
             'amount' => 100.00,
             'is_duplicate' => false,
-            'external_id' => 'category:99999', // Non-existent category
+            'category_id' => 99999,
         ]);
 
         $committer = new StatementImportCommitter($import);
         $result = $committer->commit();
 
-        // Should fail gracefully
         $this->assertFalse($result);
-
-        // No transactions should be created
         $this->assertCount(0, Transaction::where('user_id', $user->id)->get());
-
-        // Import status should remain parsed
         $this->assertEquals(BankStatementConfig::STATUS_PARSED, $import->fresh()->status);
     }
 }

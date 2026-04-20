@@ -11,6 +11,7 @@ use App\Support\BankStatementConfig;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class BankStatementImportProcessorTest extends TestCase
@@ -239,10 +240,10 @@ class BankStatementImportProcessorTest extends TestCase
         // Assert that the error was logged with the expected message
         Log::shouldHaveReceived('error')
             ->once()
-            ->with('Bank statement parsing failed', [
-                'import_id' => $import->id,
-                'error' => 'CSV file not found',
-            ]);
+            ->with('Bank statement parsing failed', Mockery::on(function ($context) use ($import) {
+                return $context['import_id'] === $import->id
+                    && str_contains($context['error'], 'CSV file not found');
+            }));
     }
 
     public function test_is_idempotent(): void

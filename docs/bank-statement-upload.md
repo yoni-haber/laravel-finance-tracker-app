@@ -159,7 +159,8 @@ The `config` JSON field contains parsing instructions with user-friendly 1-based
     "debit": 2,          // Column 3 in user interface = index 2 in parser (alternative: separate columns)
     "credit": 3          // Column 4 in user interface = index 3 in parser (alternative: separate columns)
   },
-  "date_format": "d/m/Y"
+  "date_format": "d/m/Y",
+  "has_header": true     // Whether the CSV's first row is a header row (default: true)
 }
 ```
 
@@ -169,6 +170,9 @@ The `statement_type` column determines how amounts are interpreted:
 - `'credit_card'`: Positive amounts = expenses (purchases), negative amounts = income (payments)
 
 This eliminates the need to select statement type during each import.
+
+**`has_header` Config Option**:
+The `has_header` boolean (default `true`) tells the CSV reader whether to skip the first row. Set this to `false` for CSV exports that contain only data rows with no column headings. This is configurable per bank profile in the UI.
 
 **User Interface Design**:
 - Users enter column numbers starting from 1 (natural counting)
@@ -190,7 +194,8 @@ This eliminates the need to select statement type during each import.
 **Key Columns**:
 - `import_id`: Links to the import operation
 - `date`, `description`, `amount`: Core transaction data
-- `external_id`: Stores category assignments or other metadata
+- `external_id`: Optional external reference ID from the source bank (e.g. bank-provided transaction ID)
+- `category_id`: Optional category assignment made during review (nullable, no FK — category may be deleted before commit)
 - `hash`: Unique identifier for deduplication
 - `is_duplicate`: True if this transaction already exists elsewhere
 - `is_committed`: True after conversion to real Transaction
@@ -370,14 +375,14 @@ Combines user ID, date, amount (formatted to 2 decimals), and description to cre
 **Commit Process**:
 1. Validates import is in 'parsed' state
 2. Queries non-duplicate, non-committed staged transactions
-3. Extracts category information from `external_id`
+3. Reads `category_id` directly from the staged transaction
 4. Creates `Transaction` records with proper amount/type mapping
 5. Marks staged transactions as committed
 6. Updates import status to 'committed'
 
 **Data Transformation**:
 - Converts signed amounts to positive amounts + type field
-- Extracts category IDs from `external_id` field
+- Reads `category_id` from `ImportedTransaction` (nullable — no FK on staging table)
 - Sets recurring fields to defaults (non-recurring)
 
 ### Models
@@ -508,8 +513,10 @@ Transaction uniqueness determined by:
 
 ### Retry Behavior
 - Job attempts up to 3 times with exponential backoff
-- Each retry checks import status to prevent duplicate processing
-- Permanent failure updates import status and logs error details
+- Exceptions propagate naturally from `handle()` so Laravel's queue can schedule retries
+- An atomic status claim (`whereIn('status', ['uploaded','parsing'])`) prevents two workers processing the same import simultaneously
+- Non-retriable failures (missing file, missing bank profile) mark the import as `failed` immediately without throwing — no retry
+- The `failed()` callback on the job marks the import as `failed` after all retry attempts are exhausted
 
 ### Duplicate File Upload
 - Second upload of identical file creates new import record
@@ -652,15 +659,15 @@ System stores: `{statement_type: 'credit_card', config: {date: 0, description: 2
 
 ### Adding Auto-Categorisation Rules
 **Safe Extension Points**:
-- Modify `BankStatementParser::parseRow()` to set `external_id` based on description patterns
-- Add category detection logic after amount parsing
-- Store category assignment as `category:{id}` in `external_id` field
+- Populate `category_id` on `ImportedTransaction` during parse (in `TransactionRowParser` or `StatementImportCommitter`)
+- Add category detection logic based on description patterns after row parsing
+- The `category_id` column on `imported_transactions` is nullable with no FK constraint — safe to set during staging
 
 **Implementation Approach**:
 ```php
-// In parseRow() method, after description normalization:
+// In TransactionRowParser or a new post-parse step:
 $categoryId = $this->detectCategory($description);
-$externalId = $categoryId ? "category:{$categoryId}" : null;
+$importedTransaction->category_id = $categoryId;
 ```
 
 ### Supporting Additional CSV Layouts
@@ -790,8 +797,7 @@ ImportedTransaction::whereHas('bankStatementImport', function($query) {
 **No Automatic Category Assignment**
 - Categories must be manually assigned during review
 - No machine learning or pattern matching for auto-categorization
-- Extension point available but not implemented
-- Bank profile system supports manual category hints via external_id field
+- Extension point available but not implemented (see "Adding Auto-Categorisation Rules" above)
 
 **No PDF Parsing**
 - Only CSV files supported

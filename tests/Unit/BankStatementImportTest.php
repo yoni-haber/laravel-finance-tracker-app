@@ -63,23 +63,22 @@ class BankStatementImportTest extends TestCase
         );
     }
 
-    public function test_statement_type_delegation_to_bank_profile(): void
+    public function test_statement_type_uses_snapshotted_value(): void
     {
         $user = User::factory()->create();
         $bankProfile = BankProfile::factory()->for($user)->create(['statement_type' => 'bank']);
-        $creditCardProfile = BankProfile::factory()->for($user)->create(['statement_type' => 'credit_card']);
 
         $bankImport = BankStatementImport::factory()
             ->for($user)
             ->for($bankProfile, 'bankProfile')
-            ->create(['statement_type' => 'credit_card']); // This should be overridden
+            ->create(['statement_type' => 'bank']);
 
         $creditCardImport = BankStatementImport::factory()
             ->for($user)
-            ->for($creditCardProfile, 'bankProfile')
-            ->create(['statement_type' => 'bank']); // This should be overridden
+            ->for($bankProfile, 'bankProfile')
+            ->create(['statement_type' => 'credit_card']);
 
-        // Should delegate to bank profile, not use stored statement_type
+        // statement_type is snapshotted at creation — always reads from $this->statement_type
         $this->assertTrue($bankImport->isBankStatement());
         $this->assertFalse($bankImport->isCreditCardStatement());
 

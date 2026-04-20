@@ -67,11 +67,11 @@ class BankStatementImport extends Model
 
     public function isBankStatement(): bool
     {
-        return $this->bankProfile ? $this->bankProfile->isBankStatement() : ($this->statement_type === BankStatementConfig::STATEMENT_TYPE_BANK);
+        return $this->statement_type === BankStatementConfig::STATEMENT_TYPE_BANK;
     }
 
     public function isCreditCardStatement(): bool
     {
-        return $this->bankProfile ? $this->bankProfile->isCreditCardStatement() : ($this->statement_type === BankStatementConfig::STATEMENT_TYPE_CREDIT_CARD);
+        return $this->statement_type === BankStatementConfig::STATEMENT_TYPE_CREDIT_CARD;
     }
 }

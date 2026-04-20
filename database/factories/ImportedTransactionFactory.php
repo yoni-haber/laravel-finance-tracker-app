@@ -35,6 +35,7 @@ class ImportedTransactionFactory extends Factory
             'amount' => $amount,
             'hash' => $hash,
             'external_id' => null,
+            'category_id' => null,
             'is_duplicate' => false,
             'is_committed' => false,
         ];
@@ -81,12 +82,12 @@ class ImportedTransactionFactory extends Factory
     }
 
     /**
-     * Set a specific category external ID.
+     * Assign a category to the imported transaction.
      */
     public function withCategory(int $categoryId): static
     {
         return $this->state(fn (array $attributes) => [
-            'external_id' => "category:{$categoryId}",
+            'category_id' => $categoryId,
         ]);
     }
 

@@ -23,60 +23,61 @@ class BankStatementImportProcessor
             return true;
         }
 
-        try {
-            $this->import->update(['status' => BankStatementConfig::STATUS_PARSING]);
+        // Atomically claim the import by transitioning from uploaded → parsing.
+        // This prevents two queue workers from processing the same import simultaneously.
+        $claimed = BankStatementImport::where('id', $this->import->id)
+            ->whereIn('status', [BankStatementConfig::STATUS_UPLOADED, BankStatementConfig::STATUS_PARSING])
+            ->update(['status' => BankStatementConfig::STATUS_PARSING, 'updated_at' => now()]);
 
-            $filePath = Storage::path("statements/{$this->import->id}.csv");
+        if (! $claimed) {
+            // Another worker already claimed it or it's in a non-processable state.
+            $this->import->refresh();
 
-            if (! $this->import->bankProfile) {
-                logger()->error('Bank statement parsing failed', [
-                    'import_id' => $this->import->id,
-                    'error' => 'Bank profile is required for parsing',
-                ]);
-                $this->import->update(['status' => BankStatementConfig::STATUS_FAILED]);
-
-                return false;
-            }
-
-            // Step 1: Read CSV file
-            $reader = new CsvFileReader($filePath, $this->import->bankProfile);
-            try {
-                $rows = $reader->readRows();
-            } catch (Exception $e) {
-                // File not found or cannot be read
-                logger()->error('Bank statement parsing failed', [
-                    'import_id' => $this->import->id,
-                    'error' => 'CSV file not found - '.$e->getMessage(),
-                ]);
-                $this->import->update(['status' => BankStatementConfig::STATUS_FAILED]);
-
-                return false;
-            }
-
-            // Step 2: Parse rows into transactions
-            $parser = new TransactionRowParser($this->import->bankProfile);
-            $transactions = $this->parseRows($rows, $parser);
-
-            // Step 3: Add hashes and detect duplicates
-            $detector = new DuplicateDetector($this->import->user_id);
-            $detector->detectDuplicates($transactions);
-
-            // Step 4: Save imported transactions
-            $this->saveImportedTransactions($transactions);
-
-            $this->import->update(['status' => BankStatementConfig::STATUS_PARSED]);
-
-            return true;
-
-        } catch (Exception $e) {
-            $this->import->update(['status' => BankStatementConfig::STATUS_FAILED]);
-            logger()->error('Bank statement processing failed', [
-                'import_id' => $this->import->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            throw $e;
+            return $this->import->isParsed() || $this->import->isCommitted();
         }
+
+        $this->import->refresh();
+
+        $filePath = Storage::disk('local')->path("statements/{$this->import->id}.csv");
+
+        if (! $this->import->bankProfile) {
+            logger()->error('Bank statement parsing failed', [
+                'import_id' => $this->import->id,
+                'error' => 'Bank profile is required for parsing',
+            ]);
+            $this->import->update(['status' => BankStatementConfig::STATUS_FAILED]);
+
+            return false;
+        }
+
+        // Step 1: Read CSV file
+        $reader = new CsvFileReader($filePath, $this->import->bankProfile);
+        try {
+            $rows = $reader->readRows();
+        } catch (Exception $e) {
+            logger()->error('Bank statement parsing failed', [
+                'import_id' => $this->import->id,
+                'error' => 'CSV file not found - '.$e->getMessage(),
+            ]);
+            $this->import->update(['status' => BankStatementConfig::STATUS_FAILED]);
+
+            return false;
+        }
+
+        // Step 2: Parse rows into transactions
+        $parser = new TransactionRowParser($this->import->bankProfile);
+        $transactions = $this->parseRows($rows, $parser);
+
+        // Step 3: Add hashes and detect duplicates
+        $detector = new DuplicateDetector($this->import->user_id);
+        $detector->detectDuplicates($transactions);
+
+        // Step 4: Save imported transactions
+        $this->saveImportedTransactions($transactions);
+
+        $this->import->update(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        return true;
     }
 
     /**

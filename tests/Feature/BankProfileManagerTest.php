@@ -94,6 +94,7 @@ class BankProfileManagerTest extends TestCase
         $this->assertEquals([
             'columns' => ['date' => 0, 'description' => 1, 'amount' => 2],
             'date_format' => 'd/m/Y',
+            'has_header' => true,
         ], $profile->config);
     }
 
@@ -123,6 +124,7 @@ class BankProfileManagerTest extends TestCase
         $this->assertEquals([
             'columns' => ['date' => 0, 'description' => 1, 'debit' => 2, 'credit' => 3],
             'date_format' => 'd/m/Y',
+            'has_header' => true,
         ], $profile->config);
     }
 
@@ -302,5 +304,53 @@ class BankProfileManagerTest extends TestCase
             ->assertSet('showCreateForm', false)
             ->assertSet('editingProfile', null)
             ->assertSet('hasSeparateColumns', false);
+    }
+
+    public function test_creates_profile_with_has_header_false(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(BankProfileManager::class)
+            ->call('showCreate')
+            ->set('form.name', 'No Header Bank')
+            ->set('form.statement_type', 'bank')
+            ->set('form.date_column', 1)
+            ->set('form.description_column', 2)
+            ->set('form.amount_column', 3)
+            ->set('form.date_format', 'd/m/Y')
+            ->set('form.has_header', false)
+            ->set('hasSeparateColumns', false)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $profile = BankProfile::where('name', 'No Header Bank')->where('user_id', $user->id)->first();
+        $this->assertFalse($profile->config['has_header']);
+    }
+
+    public function test_has_header_defaults_to_true(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(BankProfileManager::class)
+            ->assertSet('form.has_header', true);
+    }
+
+    public function test_edits_profile_restores_has_header_value(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->for($user)->create([
+            'config' => [
+                'columns' => ['date' => 0, 'description' => 1, 'amount' => 2],
+                'date_format' => 'd/m/Y',
+                'has_header' => false,
+            ],
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(BankProfileManager::class)
+            ->call('edit', $profile->id)
+            ->assertSet('form.has_header', false);
     }
 }
