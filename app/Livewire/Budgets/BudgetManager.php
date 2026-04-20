@@ -4,6 +4,7 @@ namespace App\Livewire\Budgets;
 
 use App\Models\Budget;
 use App\Models\Category;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -109,7 +110,7 @@ class BudgetManager extends Component
         $userId = Auth::id();
 
         // Compute source month/year (one month before filter)
-        $sourceDate = \Carbon\Carbon::create($this->filterYear, $this->filterMonth, 1)->subMonth();
+        $sourceDate = Carbon::create($this->filterYear, $this->filterMonth, 1)->subMonth();
         $sourceMonth = (int) $sourceDate->month;
         $sourceYear = (int) $sourceDate->year;
 
@@ -155,7 +156,7 @@ class BudgetManager extends Component
             $copied++;
         }
 
-        $targetLabel = \Carbon\Carbon::create($this->filterYear, $this->filterMonth, 1)->format('F Y');
+        $targetLabel = Carbon::create($this->filterYear, $this->filterMonth, 1)->format('F Y');
         $sourceLabel = $sourceDate->format('F Y');
 
         $message = "Copied {$copied} budget(s) from {$sourceLabel} to {$targetLabel}.";
