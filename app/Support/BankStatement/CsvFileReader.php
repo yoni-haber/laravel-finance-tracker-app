@@ -31,7 +31,7 @@ class CsvFileReader
         $hasHeader = $this->profile ? ($this->profile->config['has_header'] ?? BankStatementConfig::CSV_HAS_HEADER_DEFAULT) : BankStatementConfig::CSV_HAS_HEADER_DEFAULT;
 
         while (! $file->eof()) {
-            $row = $file->fgetcsv();
+            $row = $file->fgetcsv(separator: ',', enclosure: '"', escape: '');
 
             if ($isFirstRow && $hasHeader) {
                 $isFirstRow = false;
