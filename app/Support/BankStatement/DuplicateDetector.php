@@ -60,11 +60,13 @@ class DuplicateDetector
             return true;
         }
 
-        // Check against previously imported transactions
+        // Check against previously imported transactions (by current or original hash)
         return ImportedTransaction::whereHas('bankStatementImport', function ($query) {
             $query->where('user_id', $this->userId);
         })
-            ->where('hash', $hash)
+            ->where(function ($query) use ($hash) {
+                $query->where('hash', $hash)->orWhere('original_hash', $hash);
+            })
             ->exists();
     }
 
@@ -79,10 +81,12 @@ class DuplicateDetector
             return true;
         }
 
-        // Imported transactions (exclude current one)
+        // Imported transactions (exclude current one, check both hash and original_hash)
         $query = ImportedTransaction::whereHas('bankStatementImport', function ($query) {
             $query->where('user_id', $this->userId);
-        })->where('hash', $hash);
+        })->where(function ($query) use ($hash) {
+            $query->where('hash', $hash)->orWhere('original_hash', $hash);
+        });
 
         if ($excludeImportedTransactionId !== null) {
             $query->where('id', '!=', $excludeImportedTransactionId);

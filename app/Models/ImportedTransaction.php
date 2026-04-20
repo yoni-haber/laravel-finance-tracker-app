@@ -18,6 +18,7 @@ class ImportedTransaction extends Model
         'external_id',
         'category_id',
         'hash',
+        'original_hash',
         'is_duplicate',
         'is_committed',
     ];

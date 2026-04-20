@@ -63,6 +63,9 @@ class StatementImportCommitter
                         'is_recurring' => false,
                         'frequency' => null,
                         'recurring_until' => null,
+                        // Use original_hash so re-uploading the same CSV detects the duplicate
+                        // even if the user edited the description before committing.
+                        'hash' => $importedTransaction->original_hash ?? $importedTransaction->hash,
                     ]);
 
                     // Mark imported transaction as committed

@@ -36,6 +36,7 @@ class ImportedTransactionTest extends TestCase
             'external_id',
             'category_id',
             'hash',
+            'original_hash',
             'is_duplicate',
             'is_committed',
         ];

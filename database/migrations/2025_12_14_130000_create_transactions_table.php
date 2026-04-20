@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('frequency', ['weekly', 'monthly', 'yearly'])->nullable();
             $table->date('recurring_until')->nullable();
             $table->text('description')->nullable();
+            $table->string('hash')->nullable()->index();
             $table->timestamps();
         });
     }

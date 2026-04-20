@@ -115,6 +115,7 @@ class BankStatementImportProcessor
                             'description' => $transaction['description'],
                             'amount' => $transaction['amount'],
                             'hash' => $transaction['hash'],
+                            'original_hash' => $transaction['hash'],
                             'is_duplicate' => $transaction['is_duplicate'],
                             'external_id' => $transaction['external_id'] ?? null,
                             'created_at' => now(),
