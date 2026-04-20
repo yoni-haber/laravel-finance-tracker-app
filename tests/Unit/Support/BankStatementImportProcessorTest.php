@@ -7,6 +7,7 @@ use App\Models\BankStatementImport;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\BankStatement\BankStatementImportProcessor;
+use App\Support\BankStatement\DuplicateDetector;
 use App\Support\BankStatementConfig;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
@@ -141,7 +142,7 @@ class BankStatementImportProcessorTest extends TestCase
         ]);
 
         // Generate hash for the existing transaction
-        $detector = new \App\Support\BankStatement\DuplicateDetector($user->id);
+        $detector = new DuplicateDetector($user->id);
         $hash = $detector->generateTransactionHash($user->id, $existingTransaction->date, $existingTransaction->amount, $existingTransaction->description);
         $existingTransaction->update(['hash' => $hash]);
 

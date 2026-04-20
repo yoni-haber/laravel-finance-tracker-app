@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -267,7 +268,7 @@ class TransactionManagerTest extends TestCase
             'frequency' => null,
         ]);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         Livewire::actingAs($user)
             ->test(TransactionManager::class)
@@ -364,7 +365,7 @@ class TransactionManagerTest extends TestCase
             'frequency' => null,
         ]);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         Livewire::actingAs($user)
             ->test(TransactionManager::class)
