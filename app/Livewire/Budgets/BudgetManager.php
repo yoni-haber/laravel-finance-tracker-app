@@ -140,15 +140,16 @@ class BudgetManager extends Component
         foreach ($sourceBudgets as $source) {
             if (in_array($source->category_id, $existingCategoryIds)) {
                 $skipped++;
+
                 continue;
             }
 
             Budget::create([
-                'user_id'     => $userId,
+                'user_id' => $userId,
                 'category_id' => $source->category_id,
-                'month'       => $this->filterMonth,
-                'year'        => $this->filterYear,
-                'amount'      => $source->amount,
+                'month' => $this->filterMonth,
+                'year' => $this->filterYear,
+                'amount' => $source->amount,
             ]);
 
             $copied++;
