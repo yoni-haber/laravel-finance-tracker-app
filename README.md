@@ -1,9 +1,9 @@
 # Laravel Finance Tracker
 
 ## Project Overview
-Laravel Finance Tracker is a personal budgeting and finance dashboard built with the Laravel 12 Livewire starter kit. It lets authenticated users record transactions, group them into categories, set monthly budgets, track net worth entries, and review reports that summarise income vs. expenses over time. All data is scoped per user.
+Laravel Finance Tracker is a personal budgeting and finance dashboard built with the Laravel 13 Livewire starter kit. It lets authenticated users record transactions, group them into categories, set monthly budgets, track net worth entries, and review reports that summarise income vs. expenses over time. All data is scoped per user.
 
-- **Framework:** Laravel 12 with Fortify authentication, Livewire 3, and Volt/Flux for server-driven UI components.
+- **Framework:** Laravel 13 with Fortify authentication, Livewire 4, and Volt/Flux for server-driven UI components.
 - **Language:** PHP 8.4+.
 - **Frontend:** Blade-based Livewire views enhanced by Volt components; assets compiled with Vite, Tailwind CSS, and the Laravel Vite plugin.
 - **Database:** SQLite by default for easy local setup (switchable to MySQL/PostgreSQL via `.env`).
@@ -199,8 +199,8 @@ The repository includes multiple workflows to keep quality high and demonstrate 
 - **Additional checks:** Workflows for coverage, dependency audits, secret scanning, migrations, and PHP security checks further harden the codebase (see `.github/workflows/`). 
 
 ## Skills Demonstrated
-- Laravel 12 fundamentals: routing to Livewire components, Fortify auth, validation, Eloquent models, and schema migrations.  
-- Livewire 3 + Volt patterns: server-driven UI state, reusable layouts, and interactive forms without heavy JavaScript. 
+- Laravel 13 fundamentals: routing to Livewire components, Fortify auth, validation, Eloquent models, and schema migrations.  
+- Livewire 4 + Volt patterns: server-driven UI state, reusable layouts, and interactive forms without heavy JavaScript. 
 - Domain modelling: Transactions, categories, budgets, net worth entries, and recurring transaction support with occurrence exceptions.
 - Frontend tooling: Vite, Tailwind CSS, and Laravel Vite plugin for modern asset pipelines.
 - DevOps & quality: Multi-stage CI with tests, linting, static analysis, coverage, and security scans to mirror professional workflows.
