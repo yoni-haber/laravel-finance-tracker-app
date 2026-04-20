@@ -36,7 +36,7 @@ Laravel Finance Tracker is a personal budgeting and finance dashboard built with
 1. **Prerequisites:** PHP 8.2+, Composer, Node 20+ (works with Node 22 in CI), npm, and SQLite (default).  
 2. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/laravel-finance-tracker-app.git
+   git clone ... # use preferred method (HTTPS/SSH)
    cd laravel-finance-tracker-app
    ```
 3. **Install dependencies:**
