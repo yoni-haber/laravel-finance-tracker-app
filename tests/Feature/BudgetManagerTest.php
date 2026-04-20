@@ -6,6 +6,7 @@ use App\Livewire\Budgets\BudgetManager;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -280,7 +281,7 @@ class BudgetManagerTest extends TestCase
             ->for(Category::factory()->for($otherUser), 'category')
             ->create();
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         Livewire::actingAs($user)
             ->test(BudgetManager::class)

@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\ImportedTransaction;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\BankStatement\DuplicateDetector;
 use App\Support\BankStatementConfig;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -373,7 +374,7 @@ class StatementImportReviewTest extends TestCase
         $this->assertEquals('MY PURCHASE', $transaction->description);
 
         // Hash must match what would be generated from the normalized (uppercased) description
-        $detector = new \App\Support\BankStatement\DuplicateDetector($user->id);
+        $detector = new DuplicateDetector($user->id);
         $expectedHash = $detector->generateTransactionHash($user->id, '2026-01-01', 100.00, 'MY PURCHASE');
         $this->assertEquals($expectedHash, $transaction->hash);
     }
@@ -404,7 +405,7 @@ class StatementImportReviewTest extends TestCase
         $this->assertEquals('TESCO EXTRA', $transaction->description);
 
         // Hash must be identical to what the parser would produce for the same raw description
-        $detector = new \App\Support\BankStatement\DuplicateDetector($user->id);
+        $detector = new DuplicateDetector($user->id);
         $expectedHash = $detector->generateTransactionHash($user->id, '2026-01-01', 100.00, 'TESCO EXTRA');
         $this->assertEquals($expectedHash, $transaction->hash);
     }
