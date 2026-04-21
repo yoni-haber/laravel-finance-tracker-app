@@ -4,6 +4,7 @@ namespace App\Livewire\Budgets;
 
 use App\Models\Budget;
 use App\Models\Category;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -102,6 +103,68 @@ class BudgetManager extends Component
     {
         Budget::where('user_id', Auth::id())->where('id', $budgetId)->delete();
         session()->flash('status', 'Budget removed.');
+    }
+
+    public function copyFromPreviousMonth(): void
+    {
+        $userId = Auth::id();
+
+        // Compute source month/year (one month before filter)
+        $sourceDate = Carbon::create($this->filterYear, $this->filterMonth, 1)->subMonth();
+        $sourceMonth = (int) $sourceDate->month;
+        $sourceYear = (int) $sourceDate->year;
+
+        $sourceBudgets = Budget::where('user_id', $userId)
+            ->where('month', $sourceMonth)
+            ->where('year', $sourceYear)
+            ->get();
+
+        if ($sourceBudgets->isEmpty()) {
+            session()->flash('copy_status', 'No budgets found for '.
+                $sourceDate->format('F Y').
+                ' to copy.'
+            );
+
+            return;
+        }
+
+        // Category IDs that already have a budget in the target month
+        $existingCategoryIds = Budget::where('user_id', $userId)
+            ->where('month', $this->filterMonth)
+            ->where('year', $this->filterYear)
+            ->pluck('category_id')
+            ->all();
+
+        $copied = 0;
+        $skipped = 0;
+
+        foreach ($sourceBudgets as $source) {
+            if (in_array($source->category_id, $existingCategoryIds)) {
+                $skipped++;
+
+                continue;
+            }
+
+            Budget::create([
+                'user_id' => $userId,
+                'category_id' => $source->category_id,
+                'month' => $this->filterMonth,
+                'year' => $this->filterYear,
+                'amount' => $source->amount,
+            ]);
+
+            $copied++;
+        }
+
+        $targetLabel = Carbon::create($this->filterYear, $this->filterMonth, 1)->format('F Y');
+        $sourceLabel = $sourceDate->format('F Y');
+
+        $message = "Copied {$copied} budget(s) from {$sourceLabel} to {$targetLabel}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} skipped (already existed).";
+        }
+
+        session()->flash('copy_status', $message);
     }
 
     public function resetForm(): void

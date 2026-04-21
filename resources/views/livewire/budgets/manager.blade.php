@@ -59,9 +59,8 @@
     <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <h3 class="text-lg font-semibold">Budgets</h3>
-            <div class="flex gap-2 text-sm">
-                <select wire:model.live="filterMonth"
-                        class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+                <select wire:model.live="filterMonth" class="rounded-md border-gray-300 dark:bg-zinc-800 dark:border-zinc-700">
                     @foreach (range(1, 12) as $month)
                         <option value="{{ $month }}">{{ now()->startOfYear()->month($month)->shortMonthName }}</option>
                     @endforeach
@@ -76,8 +75,21 @@
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
                     @endforeach
                 </select>
+                <button
+                    type="button"
+                    wire:click="copyFromPreviousMonth"
+                    wire:loading.attr="disabled"
+                    wire:target="copyFromPreviousMonth"
+                    class="rounded-md bg-blue-600 px-3 py-1.5 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                    <span wire:loading.remove wire:target="copyFromPreviousMonth">Copy from previous month</span>
+                    <span wire:loading wire:target="copyFromPreviousMonth">Copying…</span>
+                </button>
             </div>
         </div>
+        @if (session()->has('copy_status'))
+            <p class="mt-2 text-sm text-emerald-600">{{ session('copy_status') }}</p>
+        @endif
         <div class="mt-4 overflow-x-auto">
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700 text-sm">
                 <thead class="bg-zinc-50 dark:bg-zinc-800">

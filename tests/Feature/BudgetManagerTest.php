@@ -353,6 +353,102 @@ class BudgetManagerTest extends TestCase
             });
     }
 
+    public function test_copy_from_previous_month_creates_missing_budgets(): void
+    {
+        $user = User::factory()->create();
+        $catA = Category::factory()->for($user)->create();
+        $catB = Category::factory()->for($user)->create();
+
+        Budget::factory()->for($user)->for($catA, 'category')->create(['month' => 3, 'year' => 2025, 'amount' => '200.00']);
+        Budget::factory()->for($user)->for($catB, 'category')->create(['month' => 3, 'year' => 2025, 'amount' => '400.00']);
+
+        Livewire::actingAs($user)
+            ->test(BudgetManager::class)
+            ->set('filterMonth', 4)
+            ->set('filterYear', 2025)
+            ->call('copyFromPreviousMonth')
+            ->assertSee('Copied 2 budget(s) from March 2025 to April 2025.');
+
+        $this->assertDatabaseHas('budgets', ['user_id' => $user->id, 'category_id' => $catA->id, 'month' => 4, 'year' => 2025, 'amount' => '200.00']);
+        $this->assertDatabaseHas('budgets', ['user_id' => $user->id, 'category_id' => $catB->id, 'month' => 4, 'year' => 2025, 'amount' => '400.00']);
+    }
+
+    public function test_copy_from_previous_month_skips_existing_budgets(): void
+    {
+        $user = User::factory()->create();
+        $catA = Category::factory()->for($user)->create();
+        $catB = Category::factory()->for($user)->create();
+
+        // Previous month
+        Budget::factory()->for($user)->for($catA, 'category')->create(['month' => 3, 'year' => 2025, 'amount' => '200.00']);
+        Budget::factory()->for($user)->for($catB, 'category')->create(['month' => 3, 'year' => 2025, 'amount' => '400.00']);
+
+        // catA already has a budget in the target month
+        Budget::factory()->for($user)->for($catA, 'category')->create(['month' => 4, 'year' => 2025, 'amount' => '999.00']);
+
+        Livewire::actingAs($user)
+            ->test(BudgetManager::class)
+            ->set('filterMonth', 4)
+            ->set('filterYear', 2025)
+            ->call('copyFromPreviousMonth')
+            ->assertSee('Copied 1 budget(s) from March 2025 to April 2025.')
+            ->assertSee('1 skipped (already existed).');
+
+        // Existing budget must remain untouched
+        $this->assertDatabaseHas('budgets', ['user_id' => $user->id, 'category_id' => $catA->id, 'month' => 4, 'year' => 2025, 'amount' => '999.00']);
+        // catB must have been copied
+        $this->assertDatabaseHas('budgets', ['user_id' => $user->id, 'category_id' => $catB->id, 'month' => 4, 'year' => 2025, 'amount' => '400.00']);
+    }
+
+    public function test_copy_from_previous_month_flashes_message_when_source_is_empty(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(BudgetManager::class)
+            ->set('filterMonth', 4)
+            ->set('filterYear', 2025)
+            ->call('copyFromPreviousMonth')
+            ->assertSee('No budgets found for March 2025 to copy.');
+
+        $this->assertDatabaseCount('budgets', 0);
+    }
+
+    public function test_copy_from_previous_month_handles_january_rollover(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+
+        Budget::factory()->for($user)->for($category, 'category')->create(['month' => 12, 'year' => 2024, 'amount' => '150.00']);
+
+        Livewire::actingAs($user)
+            ->test(BudgetManager::class)
+            ->set('filterMonth', 1)
+            ->set('filterYear', 2025)
+            ->call('copyFromPreviousMonth')
+            ->assertSee('Copied 1 budget(s) from December 2024 to January 2025.');
+
+        $this->assertDatabaseHas('budgets', ['user_id' => $user->id, 'category_id' => $category->id, 'month' => 1, 'year' => 2025, 'amount' => '150.00']);
+    }
+
+    public function test_copy_from_previous_month_does_not_copy_other_users_budgets(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $otherCategory = Category::factory()->for($otherUser)->create();
+
+        Budget::factory()->for($otherUser)->for($otherCategory, 'category')->create(['month' => 3, 'year' => 2025, 'amount' => '500.00']);
+
+        Livewire::actingAs($user)
+            ->test(BudgetManager::class)
+            ->set('filterMonth', 4)
+            ->set('filterYear', 2025)
+            ->call('copyFromPreviousMonth')
+            ->assertSee('No budgets found for March 2025 to copy.');
+
+        $this->assertDatabaseCount('budgets', 1); // Only the other user's original budget
+    }
+
     public function test_reset_form_clears_state_to_defaults(): void
     {
         $user = User::factory()->create();
