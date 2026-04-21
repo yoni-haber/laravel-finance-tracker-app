@@ -11,7 +11,6 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Support\BankStatement\DuplicateDetector;
 use App\Support\BankStatementConfig;
-use App\Support\StatementImportCommitter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;

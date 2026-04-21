@@ -11,7 +11,7 @@ use SplFileObject;
 readonly class CsvFileReader
 {
     public function __construct(
-        private string       $filePath,
+        private string $filePath,
         private ?BankProfile $profile = null
     ) {}
 
