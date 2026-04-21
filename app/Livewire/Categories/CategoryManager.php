@@ -19,6 +19,17 @@ class CategoryManager extends Component
 
     public ?int $categoryId = null;
 
+    public function render(): View
+    {
+        $categories = Category::where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
+
+        return view('livewire.categories.manager', [
+            'categories' => $categories,
+        ]);
+    }
+
     public function save(): void
     {
         $data = $this->validate();
@@ -53,17 +64,6 @@ class CategoryManager extends Component
     {
         Category::where('user_id', Auth::id())->where('id', $categoryId)->delete();
         session()->flash('status', 'Category removed.');
-    }
-
-    public function render(): View
-    {
-        $categories = Category::where('user_id', Auth::id())
-            ->orderBy('name')
-            ->get();
-
-        return view('livewire.categories.manager', [
-            'categories' => $categories,
-        ]);
     }
 
     public function resetForm(): void

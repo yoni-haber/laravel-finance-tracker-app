@@ -16,12 +16,6 @@ class BankProfileSeeder extends Seeder
         // Get the first user to assign these sample profiles to
         $firstUser = User::first();
 
-        if (! $firstUser) {
-            $this->command->warn('No users found. Skipping bank profile seeding.');
-
-            return;
-        }
-
         $profiles = [
             [
                 'name' => 'UK Bank - Standard Format',
@@ -71,7 +65,5 @@ class BankProfileSeeder extends Seeder
                 ]
             );
         }
-
-        $this->command->info('Created '.BankProfile::where('user_id', $firstUser->id)->count().' bank profiles for user: '.$firstUser->email);
     }
 }

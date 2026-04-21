@@ -358,6 +358,40 @@ class NetWorthTrackerTest extends TestCase
         $this->assertSame('150000.00', $component->get('liabilityLines')[0]['amount']);
     }
 
+    public function test_save_asset_line_does_nothing_when_index_does_not_exist(): void
+    {
+        $user = User::factory()->create();
+
+        $component = Livewire::actingAs($user)
+            ->test(NetWorthTracker::class)
+            ->set('assetLines', [['category' => 'Cash', 'amount' => '100.00']])
+            ->call('saveAssetLine', 99); // index 99 does not exist
+
+        // Array must remain untouched
+        $this->assertSame(
+            [['category' => 'Cash', 'amount' => '100.00']],
+            $component->get('assetLines')
+        );
+        // editingAssetIndex is still cleared by saveAssetLine
+        $component->assertSet('editingAssetIndex', null);
+    }
+
+    public function test_save_liability_line_does_nothing_when_index_does_not_exist(): void
+    {
+        $user = User::factory()->create();
+
+        $component = Livewire::actingAs($user)
+            ->test(NetWorthTracker::class)
+            ->set('liabilityLines', [['category' => 'Loan', 'amount' => '500.00']])
+            ->call('saveLiabilityLine', 99); // index 99 does not exist
+
+        $this->assertSame(
+            [['category' => 'Loan', 'amount' => '500.00']],
+            $component->get('liabilityLines')
+        );
+        $component->assertSet('editingLiabilityIndex', null);
+    }
+
     public function test_calculated_net_worth_is_positive_when_assets_exceed_liabilities(): void
     {
         $user = User::factory()->create();

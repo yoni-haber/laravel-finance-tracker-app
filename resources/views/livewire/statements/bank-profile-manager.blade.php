@@ -151,7 +151,7 @@
                         class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-600"
                     >
                     <label for="has-header" class="text-sm text-gray-900 dark:text-white">
-                        My CSV has a header row
+                        CSV has a header row
                     </label>
                     <p class="text-xs text-gray-500">
                         Uncheck if the first row of your CSV is a data row (no column names)
@@ -168,7 +168,7 @@
                                 class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-600"
                             >
                             <label for="separate-columns" class="text-sm text-gray-900 dark:text-white">
-                                My CSV has separate debit and credit columns
+                                CSV has separate debit and credit columns
                             </label>
                         </div>
 

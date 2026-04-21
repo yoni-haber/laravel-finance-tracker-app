@@ -69,9 +69,7 @@ class ParseBankStatementJob implements ShouldQueue
     {
         $import = BankStatementImport::find($this->importId);
 
-        if ($import) {
-            $import->update(['status' => BankStatementConfig::STATUS_FAILED]);
-        }
+        $import?->update(['status' => BankStatementConfig::STATUS_FAILED]);
 
         logger()->error('Bank statement parsing job failed permanently', [
             'import_id' => $this->importId,

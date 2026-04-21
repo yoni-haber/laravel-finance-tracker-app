@@ -15,10 +15,6 @@ class BudgetManagerTest extends TestCase
 {
     use RefreshDatabase;
 
-    // -------------------------------------------------------------------------
-    // mount()
-    // -------------------------------------------------------------------------
-
     public function test_mount_sets_month_and_year_to_current_date(): void
     {
         $user = User::factory()->create();
@@ -31,10 +27,6 @@ class BudgetManagerTest extends TestCase
             ->assertSet('filterMonth', (int) $now->month)
             ->assertSet('filterYear', (int) $now->year);
     }
-
-    // -------------------------------------------------------------------------
-    // save() – create
-    // -------------------------------------------------------------------------
 
     public function test_save_creates_budget_with_valid_data(): void
     {
@@ -158,10 +150,6 @@ class BudgetManagerTest extends TestCase
             ->assertHasErrors('year');
     }
 
-    // -------------------------------------------------------------------------
-    // save() – update
-    // -------------------------------------------------------------------------
-
     public function test_save_updates_existing_budget(): void
     {
         $user = User::factory()->create();
@@ -248,10 +236,6 @@ class BudgetManagerTest extends TestCase
         $this->assertDatabaseHas('budgets', ['id' => $otherBudget->id]);
     }
 
-    // -------------------------------------------------------------------------
-    // edit()
-    // -------------------------------------------------------------------------
-
     public function test_edit_loads_all_fields_correctly(): void
     {
         $user = User::factory()->create();
@@ -288,10 +272,6 @@ class BudgetManagerTest extends TestCase
             ->call('edit', $otherBudget->id);
     }
 
-    // -------------------------------------------------------------------------
-    // delete()
-    // -------------------------------------------------------------------------
-
     public function test_delete_removes_own_budget_and_flashes_message(): void
     {
         $user = User::factory()->create();
@@ -323,10 +303,6 @@ class BudgetManagerTest extends TestCase
 
         $this->assertDatabaseHas('budgets', ['id' => $otherBudget->id]);
     }
-
-    // -------------------------------------------------------------------------
-    // render() – filtering
-    // -------------------------------------------------------------------------
 
     public function test_render_filters_by_category(): void
     {
@@ -376,10 +352,6 @@ class BudgetManagerTest extends TestCase
                     && $budgets->doesntContain('id', $budgetMar->id);
             });
     }
-
-    // -------------------------------------------------------------------------
-    // resetForm()
-    // -------------------------------------------------------------------------
 
     public function test_reset_form_clears_state_to_defaults(): void
     {

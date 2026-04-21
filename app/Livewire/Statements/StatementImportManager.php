@@ -28,22 +28,6 @@ class StatementImportManager extends Component
 
     public bool $polling = false;
 
-    protected function rules(): array
-    {
-        return [
-            'csvFile' => [
-                'required',
-                'file',
-                'mimes:csv,txt',
-                'max:'.BankStatementConfig::MAX_FILE_SIZE_KB,
-            ],
-            'bankProfileId' => [
-                'required',
-                'exists:bank_profiles,id,user_id,'.Auth::id(),
-            ],
-        ];
-    }
-
     public function mount(): void
     {
         // Check for any pending imports for this user
@@ -59,6 +43,31 @@ class StatementImportManager extends Component
         // Enable polling if there's an active import that's not yet parsed
         $this->polling = $this->currentImport &&
                         ($this->currentImport->isUploaded() || $this->currentImport->isParsing());
+    }
+
+    public function render(): View
+    {
+        $bankProfiles = BankProfile::where('user_id', Auth::id())->orderBy('name')->get();
+
+        return view('livewire.statements.import-manager', [
+            'bankProfiles' => $bankProfiles,
+        ]);
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'csvFile' => [
+                'required',
+                'file',
+                'mimes:csv,txt',
+                'max:'.BankStatementConfig::MAX_FILE_SIZE_KB,
+            ],
+            'bankProfileId' => [
+                'required',
+                'exists:bank_profiles,id,user_id,'.Auth::id(),
+            ],
+        ];
     }
 
     public function checkImportStatus(): void
@@ -148,19 +157,10 @@ class StatementImportManager extends Component
         }
     }
 
-    public function proceedToReview()
+    public function proceedToReview(): void
     {
         if ($this->currentImport && $this->currentImport->isParsed()) {
-            return redirect()->route('statements.review', $this->currentImport->id);
+            $this->redirect(route('statements.review', $this->currentImport->id));
         }
-    }
-
-    public function render(): View
-    {
-        $bankProfiles = BankProfile::where('user_id', Auth::id())->orderBy('name')->get();
-
-        return view('livewire.statements.import-manager', [
-            'bankProfiles' => $bankProfiles,
-        ]);
     }
 }

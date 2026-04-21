@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Str;
 
-class TransactionRowParser
+readonly class TransactionRowParser
 {
     public function __construct(
         private BankProfile $profile
@@ -68,7 +68,7 @@ class TransactionRowParser
             return null;
         }
 
-        $description = $this->normalizeDescription(trim($row[$descriptionIndex] ?? ''));
+        $description = $this->normaliseDescription(trim($row[$descriptionIndex] ?? ''));
 
         return empty($description) ? null : $description;
     }
@@ -109,9 +109,9 @@ class TransactionRowParser
     }
 
     /**
-     * Normalize description text
+     * Normalise description text
      */
-    private function normalizeDescription(string $description): string
+    private function normaliseDescription(string $description): string
     {
         return Str::squish(Str::upper($description));
     }

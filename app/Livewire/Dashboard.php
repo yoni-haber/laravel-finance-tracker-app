@@ -9,8 +9,8 @@ use App\Support\TransactionReport;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -26,8 +26,8 @@ class Dashboard extends Component
     public function mount(): void
     {
         $now = now();
-        $this->month = (int) $now->month;
-        $this->year = (int) $now->year;
+        $this->month = $now->month;
+        $this->year = $now->year;
     }
 
     public function render(): View
@@ -42,33 +42,23 @@ class Dashboard extends Component
                 'budgetSummaries' => collect(),
                 'incomeCategoryBreakdown' => collect(),
                 'expenseCategoryBreakdown' => collect(),
-                'schemaMissing' => false,
-            ]);
-        }
-
-        if (! $this->schemaReady()) {
-            return view('livewire.dashboard', [
-                'income' => 0,
-                'expenses' => 0,
-                'net' => 0,
-                'budgetSummaries' => collect(),
-                'incomeCategoryBreakdown' => collect(),
-                'expenseCategoryBreakdown' => collect(),
-                'schemaMissing' => true,
             ]);
         }
 
         $transactions = TransactionReport::projectedForMonth($userId, $this->month, $this->year);
 
-        $incomePennies = Money::normalize(
-            $transactions->where('type', Transaction::TYPE_INCOME)->sum('amount')
-        );
-        $expensePennies = Money::normalize(
-            $transactions->where('type', Transaction::TYPE_EXPENSE)->sum('amount')
+        $income = Money::fromPennies(
+            Money::normalize(
+                $transactions->where('type', Transaction::TYPE_INCOME)->sum('amount')
+            )
         );
 
-        $income = Money::fromPennies($incomePennies);
-        $expenses = Money::fromPennies($expensePennies);
+        $expenses = Money::fromPennies(
+            Money::normalize(
+                $transactions->where('type', Transaction::TYPE_EXPENSE)->sum('amount')
+            )
+        );
+
         $net = Money::subtract($income, $expenses);
 
         $budgets = Budget::with('category')
@@ -78,7 +68,7 @@ class Dashboard extends Component
             ->get();
 
         $now = now();
-        $periodEnd = Carbon::create($this->year, $this->month, 1)->endOfMonth();
+        $periodEnd = Carbon::create($this->year, $this->month)->endOfMonth();
 
         if ($now->isSameMonth($periodEnd)) {
             $periodEnd = $now->copy()->endOfDay();
@@ -120,18 +110,10 @@ class Dashboard extends Component
             'budgetSummaries' => $budgetSummaries,
             'incomeCategoryBreakdown' => $categoryIncome,
             'expenseCategoryBreakdown' => $categoryExpenses,
-            'schemaMissing' => false,
         ]);
     }
 
-    protected function schemaReady(): bool
-    {
-        return Schema::hasTable('transactions')
-            && Schema::hasTable('categories')
-            && Schema::hasTable('budgets');
-    }
-
-    private function categoryTotals(Collection $transactions, string $type): Collection
+    private function categoryTotals(Collection $transactions, string $type): Enumerable
     {
         return $transactions
             ->where('type', $type)
