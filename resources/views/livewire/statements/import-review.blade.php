@@ -13,14 +13,14 @@
     <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold">Import Summary</h3>
-            <button 
+            <button
                 wire:click="backToImport"
-                class="text-gray-600 hover:text-gray-800 text-sm underline"
+                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
                 ← Back to Import
             </button>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="text-center">
                 <div class="text-2xl font-bold text-blue-600">{{ $summary['total'] }}</div>
@@ -55,11 +55,11 @@
                         Type: {{ $import->statement_type === 'credit_card' ? 'Credit Card Statement' : 'Bank Statement' }}
                     </p>
                 </div>
-                
+
                 @if ($summary['new_transactions'] > 0)
                     <div class="flex gap-3">
                         <flux:modal.trigger name="confirm-import-commit">
-                            <button 
+                            <button
                                 class="bg-emerald-600 text-white px-6 py-2 rounded-md hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                             >
                                 Import {{ $summary['new_transactions'] }} Transactions
@@ -81,7 +81,7 @@
             <h3 class="text-lg font-semibold">Transaction Details</h3>
             <p class="text-sm text-gray-600 mt-1">Review, edit, categorize, or remove transactions before importing.</p>
         </div>
-        
+
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 dark:bg-gray-800">
@@ -101,52 +101,52 @@
                             @if ($editingTransactionId === $transaction->id)
                                 <!-- Edit Mode -->
                                 <td class="px-6 py-4">
-                                    <input 
-                                        type="date" 
-                                        wire:model="editForm.date" 
+                                    <input
+                                        type="date"
+                                        wire:model="editForm.date"
                                         class="w-full text-sm border-gray-300 rounded-md dark:bg-zinc-800 dark:border-zinc-700"
                                     >
-                                    @error('editForm.date') 
-                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p> 
+                                    @error('editForm.date')
+                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                                     @enderror
                                 </td>
                                 <td class="px-6 py-4">
-                                    <textarea 
-                                        wire:model="editForm.description" 
-                                        class="w-full text-sm border-gray-300 rounded-md dark:bg-zinc-800 dark:border-zinc-700" 
+                                    <textarea
+                                        wire:model="editForm.description"
+                                        class="w-full text-sm border-gray-300 rounded-md dark:bg-zinc-800 dark:border-zinc-700"
                                         rows="2"
                                     ></textarea>
-                                    @error('editForm.description') 
-                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p> 
+                                    @error('editForm.description')
+                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                                     @enderror
                                 </td>
                                 <td class="px-6 py-4">
-                                    <select 
-                                        wire:model="editForm.type" 
+                                    <select
+                                        wire:model="editForm.type"
                                         class="w-full text-sm border-gray-300 rounded-md dark:bg-zinc-800 dark:border-zinc-700"
                                     >
                                         <option value="{{ \App\Models\Transaction::TYPE_EXPENSE }}">Expense</option>
                                         <option value="{{ \App\Models\Transaction::TYPE_INCOME }}">Income</option>
                                     </select>
-                                    @error('editForm.type') 
-                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p> 
+                                    @error('editForm.type')
+                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                                     @enderror
                                 </td>
                                 <td class="px-6 py-4">
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
+                                    <input
+                                        type="number"
+                                        step="0.01"
                                         min="0.01"
-                                        wire:model="editForm.amount" 
+                                        wire:model="editForm.amount"
                                         class="w-full text-sm border-gray-300 rounded-md text-right dark:bg-zinc-800 dark:border-zinc-700"
                                     >
-                                    @error('editForm.amount') 
-                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p> 
+                                    @error('editForm.amount')
+                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                                     @enderror
                                 </td>
                                 <td class="px-6 py-4">
-                                    <select 
-                                        wire:model="editForm.category_id" 
+                                    <select
+                                        wire:model="editForm.category_id"
                                         class="w-full text-sm border-gray-300 rounded-md dark:bg-zinc-800 dark:border-zinc-700"
                                     >
                                         <option value="">Uncategorised</option>
@@ -162,14 +162,14 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex gap-2 justify-center">
-                                        <button 
-                                            wire:click="updateTransaction" 
+                                        <button
+                                            wire:click="updateTransaction"
                                             class="text-emerald-600 hover:text-emerald-800 text-xs font-medium"
                                         >
                                             Save
                                         </button>
-                                        <button 
-                                            wire:click="cancelEdit" 
+                                        <button
+                                            wire:click="cancelEdit"
                                             class="text-gray-600 hover:text-gray-800 text-xs font-medium"
                                         >
                                             Cancel
@@ -186,14 +186,14 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     @if (!$transaction->is_duplicate)
-                                        <select 
+                                        <select
                                             wire:change="updateType({{ $transaction->id }}, $event.target.value)"
                                             class="text-sm border-gray-300 rounded-md dark:bg-zinc-800 dark:border-zinc-700"
                                         >
                                             @php
                                                 // Determine correct type based on statement type and amount sign
                                                 if ($import->statement_type === 'credit_card') {
-                                                    // Credit Card: Negative = Expense (purchases), Positive = Income (payments/refunds) 
+                                                    // Credit Card: Negative = Expense (purchases), Positive = Income (payments/refunds)
                                                     $currentType = $transaction->amount < 0 ? \App\Models\Transaction::TYPE_EXPENSE : \App\Models\Transaction::TYPE_INCOME;
                                                 } else {
                                                     // Bank: Positive = Income (deposits), Negative = Expense (withdrawals)
@@ -222,7 +222,7 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     @if (!$transaction->is_duplicate)
-                                        <select 
+                                        <select
                                             wire:change="updateCategory({{ $transaction->id }}, $event.target.value)"
                                             class="text-sm border-gray-300 rounded-md dark:bg-zinc-800 dark:border-zinc-700"
                                         >
@@ -251,8 +251,8 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     @if (!$transaction->is_duplicate)
                                         <div class="flex gap-2 justify-center">
-                                            <button 
-                                                wire:click="editTransaction({{ $transaction->id }})" 
+                                            <button
+                                                wire:click="editTransaction({{ $transaction->id }})"
                                                 class="text-blue-600 hover:text-blue-800 text-xs font-medium"
                                             >
                                                 Edit
@@ -288,11 +288,11 @@
             <div>
                 <flux:heading size="lg">Confirm Import</flux:heading>
                 <flux:subheading>
-                    This will create <strong>{{ $summary['new_transactions'] }}</strong> new transactions in your account. 
+                    This will create <strong>{{ $summary['new_transactions'] }}</strong> new transactions in your account.
                     Categories will be assigned as selected. This action cannot be undone.
                 </flux:subheading>
             </div>
-            
+
             @error('commit')
                 <div class="rounded-md bg-red-50 border border-red-200 p-4">
                     <p class="text-sm text-red-800">{{ $message }}</p>
@@ -304,8 +304,8 @@
                     <flux:button variant="filled">Cancel</flux:button>
                 </flux:modal.close>
 
-                <flux:button 
-                    variant="primary" 
+                <flux:button
+                    variant="primary"
                     wire:click="commitImport"
                     wire:loading.attr="disabled"
                 >

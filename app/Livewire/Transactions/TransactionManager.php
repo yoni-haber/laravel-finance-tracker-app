@@ -48,8 +48,22 @@ class TransactionManager extends Component
     {
         $now = now();
         $this->date = $now->toDateString();
-        $this->month = (int) $now->month;
-        $this->year = (int) $now->year;
+        $this->month = $now->month;
+        $this->year = $now->year;
+    }
+
+    public function render(): View
+    {
+        $userId = Auth::id();
+
+        $transactions = TransactionReport::projectedForMonth($userId, $this->month, $this->year, $this->filterCategory)
+            ->when($this->filterType, fn ($items) => $items->where('type', $this->filterType))
+            ->sortByDesc('date');
+
+        return view('livewire.transactions.manager', [
+            'transactions' => $transactions,
+            'categories' => Category::where('user_id', $userId)->orderBy('name')->get(),
+        ]);
     }
 
     public function save(): void
@@ -84,6 +98,7 @@ class TransactionManager extends Component
     public function edit(int $transactionId): void
     {
         $transaction = Transaction::forUser(Auth::id())->findOrFail($transactionId);
+
         $this->transactionId = $transaction->id;
         $this->type = $transaction->type;
         $this->amount = (string) $transaction->amount;
@@ -115,12 +130,6 @@ class TransactionManager extends Component
                 return;
             }
 
-            if ($parsedDate === false) {
-                $this->addError('delete', 'Invalid occurrence date.');
-
-                return;
-            }
-
             $transaction->occurrenceExceptions()->firstOrCreate(['date' => $parsedDate->toDateString()]);
             session()->flash('status', 'Transaction occurrence removed.');
 
@@ -143,20 +152,6 @@ class TransactionManager extends Component
         if (! $this->frequency) {
             $this->frequency = 'monthly';
         }
-    }
-
-    public function render(): View
-    {
-        $userId = Auth::id();
-
-        $transactions = TransactionReport::projectedForMonth($userId, $this->month, $this->year, $this->filterCategory)
-            ->when($this->filterType, fn ($items) => $items->where('type', $this->filterType))
-            ->sortByDesc('date');
-
-        return view('livewire.transactions.manager', [
-            'transactions' => $transactions,
-            'categories' => Category::where('user_id', $userId)->orderBy('name')->get(),
-        ]);
     }
 
     public function resetForm(): void

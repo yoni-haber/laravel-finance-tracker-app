@@ -28,8 +28,6 @@ class TransactionRowParserTest extends TestCase
         return $this->makeProfile('credit_card', $columns, $dateFormat);
     }
 
-    // ─── parseRow ────────────────────────────────────────────────────────────
-
     public function test_parse_row_returns_valid_array_for_complete_row(): void
     {
         $profile = $this->bankProfile(['date' => 0, 'description' => 1, 'amount' => 2]);
@@ -216,5 +214,15 @@ class TransactionRowParserTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertEquals(50.0, $result['amount']);
+    }
+
+    public function test_parse_row_returns_null_when_description_is_not_provided(): void
+    {
+        $profile = $this->bankProfile(['date' => 0, 'credit' => 1]);
+        $parser = new TransactionRowParser($profile);
+
+        $result = $parser->parseRow(['2024-01-15', '50.00']);
+
+        $this->assertNull($result);
     }
 }

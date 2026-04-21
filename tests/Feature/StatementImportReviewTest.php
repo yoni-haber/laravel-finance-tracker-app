@@ -534,4 +534,51 @@ class StatementImportReviewTest extends TestCase
             ->test(StatementImportReview::class, ['importId' => $import->id])
             ->assertRedirect(route('statements.import'));
     }
+
+    public function test_update_type_to_income_makes_amount_positive(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'bank']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['amount' => -100.00]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('updateType', $transaction->id, Transaction::TYPE_INCOME);
+
+        $this->assertEquals(100.00, $transaction->fresh()->amount);
+    }
+
+    public function test_determine_transaction_type_for_credit_card_positive_amount_is_income(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create(['statement_type' => 'credit_card']);
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        $transaction = ImportedTransaction::factory()->for($import, 'bankStatementImport')->create(['amount' => 50.00]);
+
+        Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id])
+            ->call('editTransaction', $transaction->id)
+            ->assertSet('editForm.type', Transaction::TYPE_INCOME);
+    }
+
+    public function test_commit_import_adds_error_when_import_not_parsed_at_call_time(): void
+    {
+        $user = User::factory()->create();
+        $profile = BankProfile::factory()->create();
+        $import = BankStatementImport::factory()->for($user)->for($profile, 'bankProfile')->create(['status' => BankStatementConfig::STATUS_PARSED]);
+
+        ImportedTransaction::factory()->for($import, 'bankStatementImport')->create();
+
+        $component = Livewire::actingAs($user)
+            ->test(StatementImportReview::class, ['importId' => $import->id]);
+
+        // Change status after mount so the guard inside commitImport() is hit directly
+        $import->update(['status' => BankStatementConfig::STATUS_UPLOADED]);
+
+        $component->call('commitImport')
+            ->assertHasErrors(['commit']);
+    }
 }

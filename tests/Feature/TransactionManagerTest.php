@@ -16,10 +16,6 @@ class TransactionManagerTest extends TestCase
 {
     use RefreshDatabase;
 
-    // -------------------------------------------------------------------------
-    // mount()
-    // -------------------------------------------------------------------------
-
     public function test_mount_sets_date_month_and_year_to_current(): void
     {
         Carbon::setTestNow('2024-06-15');
@@ -32,10 +28,6 @@ class TransactionManagerTest extends TestCase
             ->assertSet('month', 6)
             ->assertSet('year', 2024);
     }
-
-    // -------------------------------------------------------------------------
-    // save() – create
-    // -------------------------------------------------------------------------
 
     public function test_save_creates_non_recurring_transaction_with_null_frequency(): void
     {
@@ -83,10 +75,6 @@ class TransactionManagerTest extends TestCase
             'frequency' => 'monthly',
         ]);
     }
-
-    // -------------------------------------------------------------------------
-    // save() – update
-    // -------------------------------------------------------------------------
 
     public function test_save_updates_existing_transaction(): void
     {
@@ -161,10 +149,6 @@ class TransactionManagerTest extends TestCase
         ]);
     }
 
-    // -------------------------------------------------------------------------
-    // save() – validation
-    // -------------------------------------------------------------------------
-
     public function test_save_fails_validation_with_invalid_type(): void
     {
         $user = User::factory()->create();
@@ -225,10 +209,6 @@ class TransactionManagerTest extends TestCase
             ->assertHasErrors(['category_id']);
     }
 
-    // -------------------------------------------------------------------------
-    // edit()
-    // -------------------------------------------------------------------------
-
     public function test_edit_loads_all_fields_from_existing_transaction(): void
     {
         $user = User::factory()->create();
@@ -274,10 +254,6 @@ class TransactionManagerTest extends TestCase
             ->test(TransactionManager::class)
             ->call('edit', $otherTransaction->id);
     }
-
-    // -------------------------------------------------------------------------
-    // delete()
-    // -------------------------------------------------------------------------
 
     public function test_delete_removes_non_recurring_transaction(): void
     {
@@ -372,10 +348,6 @@ class TransactionManagerTest extends TestCase
             ->call('delete', $otherTransaction->id);
     }
 
-    // -------------------------------------------------------------------------
-    // updatedIsRecurring()
-    // -------------------------------------------------------------------------
-
     public function test_updated_is_recurring_false_clears_frequency_and_recurring_until(): void
     {
         $user = User::factory()->create();
@@ -413,10 +385,6 @@ class TransactionManagerTest extends TestCase
             ->set('is_recurring', true)
             ->assertSet('frequency', 'weekly');
     }
-
-    // -------------------------------------------------------------------------
-    // render() – filters
-    // -------------------------------------------------------------------------
 
     public function test_render_filter_type_shows_only_income_transactions(): void
     {
@@ -482,10 +450,6 @@ class TransactionManagerTest extends TestCase
                     && $transactions->every(fn ($t) => $t->category_id === $category->id);
             });
     }
-
-    // -------------------------------------------------------------------------
-    // resetForm()
-    // -------------------------------------------------------------------------
 
     public function test_reset_form_restores_all_fields_to_defaults(): void
     {

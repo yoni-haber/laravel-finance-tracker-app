@@ -29,17 +29,6 @@ class StatementImportReview extends Component
 
     public array $editForm = [];
 
-    protected function rules(): array
-    {
-        return [
-            'editForm.description' => 'required|string|max:500',
-            'editForm.amount' => 'required|numeric|min:0.01',
-            'editForm.date' => 'required|date',
-            'editForm.type' => 'required|in:income,expense',
-            'editForm.category_id' => ['nullable', Rule::exists('categories', 'id')->where('user_id', Auth::id())],
-        ];
-    }
-
     public function mount(int $importId): void
     {
         try {
@@ -56,6 +45,38 @@ class StatementImportReview extends Component
             session()->flash('error', 'Import is not ready for review.');
             $this->redirectRoute('statements.import', navigate: true);
         }
+    }
+
+    public function render(): View
+    {
+        $transactions = $this->import->importedTransactions()
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at')
+            ->get();
+
+        $summary = [
+            'total' => $transactions->count(),
+            'duplicates' => $transactions->where('is_duplicate', true)->count(),
+            'new_transactions' => $transactions->where('is_duplicate', false)->count(),
+            'total_amount' => $transactions->where('is_duplicate', false)->sum('amount'),
+        ];
+
+        return view('livewire.statements.import-review', [
+            'transactions' => $transactions,
+            'summary' => $summary,
+            'categories' => Category::where('user_id', Auth::id())->orderBy('name')->get(),
+        ]);
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'editForm.description' => 'required|string|max:500',
+            'editForm.amount' => 'required|numeric|min:0.01',
+            'editForm.date' => 'required|date',
+            'editForm.type' => 'required|in:income,expense',
+            'editForm.category_id' => ['nullable', Rule::exists('categories', 'id')->where('user_id', Auth::id())],
+        ];
     }
 
     public function editTransaction(int $transactionId): void
@@ -91,7 +112,7 @@ class StatementImportReview extends Component
             'category_id' => $this->editForm['category_id'] ?? null,
         ]);
 
-        // Regenerate hash using the saved (normalized) values so it matches future imports
+        // Regenerate hash using the saved (normalised) values so it matches future imports
         $duplicateDetector = new DuplicateDetector($this->import->user_id);
         $hash = $duplicateDetector->generateTransactionHash(
             $this->import->user_id,
@@ -131,7 +152,7 @@ class StatementImportReview extends Component
 
         $transaction->update(['amount' => $amount]);
 
-        // Regenerate hash using the explicit $amount variable, not the post-update model attribute
+        // Regenerate hash using the explicit $amount var, not the post-update model attribute
         $duplicateDetector = new DuplicateDetector($this->import->user_id);
         $hash = $duplicateDetector->generateTransactionHash(
             $this->import->user_id,
@@ -171,7 +192,7 @@ class StatementImportReview extends Component
         return $transaction->amount >= 0 ? Transaction::TYPE_INCOME : Transaction::TYPE_EXPENSE;
     }
 
-    public function commitImport()
+    public function commitImport(): void
     {
         if (! $this->import->isParsed()) {
             $this->addError('commit', 'Import is not ready to be committed.');
@@ -186,7 +207,7 @@ class StatementImportReview extends Component
             if ($success) {
                 session()->flash('status', 'Transactions imported successfully.');
 
-                return redirect()->route('statements.import');
+                $this->redirectRoute('statements.import');
             } else {
                 $this->addError('commit', 'Failed to import transactions. Please try again.');
             }
@@ -200,9 +221,9 @@ class StatementImportReview extends Component
         }
     }
 
-    public function backToImport()
+    public function backToImport(): void
     {
-        return redirect()->route('statements.import');
+        $this->redirectRoute('statements.import');
     }
 
     public function cancelEdit(): void
@@ -210,26 +231,5 @@ class StatementImportReview extends Component
         $this->editingTransactionId = null;
         $this->editForm = [];
         $this->resetValidation();
-    }
-
-    public function render(): View
-    {
-        $transactions = $this->import->importedTransactions()
-            ->orderBy('date', 'desc')
-            ->orderBy('created_at')
-            ->get();
-
-        $summary = [
-            'total' => $transactions->count(),
-            'duplicates' => $transactions->where('is_duplicate', true)->count(),
-            'new_transactions' => $transactions->where('is_duplicate', false)->count(),
-            'total_amount' => $transactions->where('is_duplicate', false)->sum('amount'),
-        ];
-
-        return view('livewire.statements.import-review', [
-            'transactions' => $transactions,
-            'summary' => $summary,
-            'categories' => Category::where('user_id', Auth::id())->orderBy('name')->get(),
-        ]);
     }
 }
