@@ -7,7 +7,7 @@ use App\Models\Transaction;
 use App\Support\BankStatementConfig;
 use Illuminate\Support\Collection;
 
-class DuplicateDetector
+readonly class DuplicateDetector
 {
     public function __construct(
         private int $userId

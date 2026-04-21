@@ -8,10 +8,10 @@ use Exception;
 use Illuminate\Support\Collection;
 use SplFileObject;
 
-class CsvFileReader
+readonly class CsvFileReader
 {
     public function __construct(
-        private string $filePath,
+        private string       $filePath,
         private ?BankProfile $profile = null
     ) {}
 

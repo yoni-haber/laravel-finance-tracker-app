@@ -7,7 +7,7 @@ use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class StatementImportCommitter
+readonly class StatementImportCommitter
 {
     public function __construct(
         private BankStatementImport $import

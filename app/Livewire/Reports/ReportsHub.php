@@ -23,7 +23,7 @@ class ReportsHub extends Component
 
     public function mount(): void
     {
-        $userId = Auth::id();
+        $userId = Auth::id() ?? abort(401);
         $this->chartData = $this->chartDataForRange($this->range, $userId);
         $this->netWorthChartData = $this->buildNetWorthChartData($userId);
     }
@@ -39,25 +39,19 @@ class ReportsHub extends Component
 
     public function updatedRange(): void
     {
+        $userId = Auth::id() ?? abort(401);
+
         if (! array_key_exists($this->range, $this->rangeOptions())) {
             $this->range = '12_months';
         }
 
-        $this->chartData = $this->chartDataForRange($this->range, Auth::id());
+        $this->chartData = $this->chartDataForRange($this->range, $userId);
 
         $this->dispatch('reports-chart-data', chartData: $this->chartData);
     }
 
-    protected function chartDataForRange(string $range, ?int $userId): array
+    protected function chartDataForRange(string $range, int $userId): array
     {
-        if (! $userId) {
-            return [
-                'labels' => [],
-                'income' => [],
-                'expenses' => [],
-            ];
-        }
-
         $labels = [];
         $income = [];
         $expenses = [];
@@ -67,14 +61,14 @@ class ReportsHub extends Component
         $monthsCount = match ($range) {
             '3_months' => 3,
             '6_months' => 6,
-            'ytd' => (int) $start->month,
+            'ytd' => $start->month,
             default => 12,
         };
 
         for ($i = $monthsCount - 1; $i >= 0; $i--) {
             $monthDate = $start->copy()->subMonths($i);
             $labels[] = $monthDate->format('M Y');
-            $transactions = TransactionReport::projectedForMonth($userId, (int) $monthDate->month, (int) $monthDate->year);
+            $transactions = TransactionReport::projectedForMonth($userId, $monthDate->month, $monthDate->year);
             $income[] = (float) $transactions->where('type', Transaction::TYPE_INCOME)->sum('amount');
             $expenses[] = (float) $transactions->where('type', Transaction::TYPE_EXPENSE)->sum('amount');
         }
@@ -82,15 +76,8 @@ class ReportsHub extends Component
         return compact('labels', 'income', 'expenses');
     }
 
-    protected function buildNetWorthChartData(?int $userId): array
+    protected function buildNetWorthChartData(int $userId): array
     {
-        if (! $userId) {
-            return [
-                'labels' => [],
-                'netWorth' => [],
-            ];
-        }
-
         $entries = NetWorthEntry::where('user_id', $userId)
             ->where('date', '>=', now()->subMonths(12)->startOfDay())
             ->orderBy('date')

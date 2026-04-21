@@ -22,6 +22,20 @@ class BankProfileManager extends Component
 
     public bool $hasSeparateColumns = false;
 
+    public function mount(): void
+    {
+        $this->resetForm();
+    }
+
+    public function render(): View
+    {
+        $profiles = BankProfile::where('user_id', Auth::id())->orderBy('name')->get();
+
+        return view('livewire.statements.bank-profile-manager', [
+            'profiles' => $profiles,
+        ]);
+    }
+
     protected function rules(): array
     {
         return [
@@ -50,11 +64,6 @@ class BankProfileManager extends Component
             'form.date_format' => 'date format',
             'form.has_header' => 'has header row',
         ];
-    }
-
-    public function mount(): void
-    {
-        $this->resetForm();
     }
 
     public function showCreate(): void
@@ -176,14 +185,5 @@ class BankProfileManager extends Component
             'date_format' => 'd/m/Y',
             'has_header' => BankStatementConfig::CSV_HAS_HEADER_DEFAULT,
         ];
-    }
-
-    public function render(): View
-    {
-        $profiles = BankProfile::where('user_id', Auth::id())->orderBy('name')->get();
-
-        return view('livewire.statements.bank-profile-manager', [
-            'profiles' => $profiles,
-        ]);
     }
 }

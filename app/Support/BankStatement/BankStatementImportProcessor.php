@@ -8,7 +8,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class BankStatementImportProcessor
+readonly class BankStatementImportProcessor
 {
     public function __construct(
         private BankStatementImport $import
@@ -25,20 +25,18 @@ class BankStatementImportProcessor
 
         // Atomically claim the import by transitioning to parsing.
         // Only STATUS_UPLOADED and STATUS_FAILED are claimable — STATUS_PARSING means
-        // another worker already holds the claim and we must not proceed concurrently.
+        // another worker already holds the claim, and we must not proceed concurrently.
         // STATUS_FAILED is included so a re-dispatched job can recover after total failure.
         $claimed = BankStatementImport::where('id', $this->import->id)
             ->whereIn('status', [BankStatementConfig::STATUS_UPLOADED, BankStatementConfig::STATUS_FAILED])
             ->update(['status' => BankStatementConfig::STATUS_PARSING]);
 
-        if (! $claimed) {
-            // Another worker already claimed it or it's in a non-processable state.
-            $this->import->refresh();
+        $this->import->refresh();
 
+        if (! $claimed) {
+            // Another worker already claimed it, or it's in a non-processable state.
             return $this->import->isParsed() || $this->import->isCommitted();
         }
-
-        $this->import->refresh();
 
         $filePath = Storage::disk('local')->path("statements/{$this->import->id}.csv");
 

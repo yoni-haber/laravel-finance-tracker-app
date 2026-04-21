@@ -39,6 +39,18 @@ class NetWorthTracker extends Component
         $this->date = now()->toDateString();
     }
 
+    public function render(): View
+    {
+        $entries = NetWorthEntry::where('user_id', Auth::id())
+            ->with('lineItems')
+            ->orderByDesc('date')
+            ->get();
+
+        return view('livewire.net-worth.tracker', [
+            'entries' => $entries,
+        ]);
+    }
+
     public function save(): void
     {
         $validated = $this->validate(
@@ -137,18 +149,6 @@ class NetWorthTracker extends Component
     {
         NetWorthEntry::where('user_id', Auth::id())->where('id', $entryId)->delete();
         session()->flash('status', 'Net worth entry removed.');
-    }
-
-    public function render(): View
-    {
-        $entries = NetWorthEntry::where('user_id', Auth::id())
-            ->with('lineItems')
-            ->orderByDesc('date')
-            ->get();
-
-        return view('livewire.net-worth.tracker', [
-            'entries' => $entries,
-        ]);
     }
 
     public function getCalculatedNetWorthProperty(): string

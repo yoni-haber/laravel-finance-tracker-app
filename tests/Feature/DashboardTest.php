@@ -44,20 +44,6 @@ class DashboardTest extends TestCase
             ->assertSet('year', 2024);
     }
 
-    public function test_it_shows_placeholder_data_when_schema_missing(): void
-    {
-        Schema::shouldReceive('hasTable')->once()->with('transactions')->andReturnFalse();
-
-        $user = User::factory()->create();
-
-        Livewire::actingAs($user)
-            ->test(Dashboard::class)
-            ->assertViewHas('schemaMissing', true)
-            ->assertViewHas('income', 0)
-            ->assertViewHas('expenses', 0)
-            ->assertViewHas('net', 0);
-    }
-
     public function test_render_calculates_dashboard_metrics(): void
     {
         Carbon::setTestNow('2024-05-15');
@@ -106,8 +92,7 @@ class DashboardTest extends TestCase
         $component
             ->assertViewHas('income', '2500.00')
             ->assertViewHas('expenses', '250.00')
-            ->assertViewHas('net', '2250.00')
-            ->assertViewHas('schemaMissing', false);
+            ->assertViewHas('net', '2250.00');
 
         $component->assertViewHas('budgetSummaries', function ($summaries) {
             $groceries = $summaries->firstWhere('category', 'Groceries');

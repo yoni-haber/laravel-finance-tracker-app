@@ -74,6 +74,7 @@
                             </button>
                         </flux:modal.trigger>
                     @endif
+
                 </div>
 
                 @if ($currentImport->isParsing())
