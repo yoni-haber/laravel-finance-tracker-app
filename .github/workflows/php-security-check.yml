@@ -3,11 +3,9 @@ name: php-security-check
 on:
   push:
     branches:
-      - develop
       - main
   pull_request:
     branches:
-      - develop
       - main
   schedule:
     - cron: '0 8 * * 1'
