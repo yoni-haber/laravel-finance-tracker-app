@@ -74,6 +74,32 @@ These scripts orchestrate the most common workflows:
 | `composer dev` | Starts all four dev processes concurrently: `artisan serve`, queue listener (`--tries=1`), `pail` log viewer, and Vite |
 | `composer test` | Clears config cache then runs the full PHPUnit suite |
 
+### E2E Tests (Playwright)
+```bash
+# Seed test data first (only needed once, or after migrate:fresh)
+php artisan db:seed
+
+# Run the full E2E suite (auto-starts the Laravel dev server)
+npx playwright test
+
+# Interactive UI — best for writing and debugging tests
+npx playwright test --ui
+
+# Run only Chromium (fastest)
+npx playwright test --project=chromium
+
+# Run a single spec file
+npx playwright test e2e/login.spec.ts
+
+# Type-check all Playwright TypeScript files
+./node_modules/.bin/tsc --noEmit
+
+# Open the HTML report from the last run
+npx playwright show-report
+```
+
+> See [`docs/playwright.md`](docs/playwright.md) for a full guide on the auth fixture, selector conventions, and how to structure new tests.
+
 ### Database
 ```bash
 # Run outstanding migrations
@@ -194,6 +220,7 @@ php artisan pail --filter="bank statement"
 ## GitHub Actions / CI
 The repository includes multiple workflows to keep quality high and demonstrate CI/CD practices:
 - **Tests (`tests.yml`):** Installs PHP 8.4 and Node 22, builds assets, and runs PHPUnit to guard core flows like authentication and finance operations.
+- **Playwright (`playwright.yml`):** Seeds the database, starts the Laravel server via Playwright's `webServer` config, and runs the E2E suite against Chromium. The HTML report is uploaded as a build artifact.
 - **Linter (`lint.yml`):** Runs Laravel Pint and can auto-commit fixes on branches, ensuring consistent styling without manual effort.
 - **Static analysis (`static-analysis.yml`):** Executes PHPStan over app, config, routes, database, and tests directories to catch type issues early.
 - **Additional checks:** Workflows for coverage, dependency audits, secret scanning, migrations, and PHP security checks further harden the codebase (see `.github/workflows/`). 
@@ -203,4 +230,4 @@ The repository includes multiple workflows to keep quality high and demonstrate 
 - Livewire 4 + Volt patterns: server-driven UI state, reusable layouts, and interactive forms without heavy JavaScript. 
 - Domain modelling: Transactions, categories, budgets, net worth entries, and recurring transaction support with occurrence exceptions.
 - Frontend tooling: Vite, Tailwind CSS, and Laravel Vite plugin for modern asset pipelines.
-- DevOps & quality: Multi-stage CI with tests, linting, static analysis, coverage, and security scans to mirror professional workflows.
+- DevOps & quality: Multi-stage CI with PHPUnit tests, Playwright E2E, linting, static analysis, coverage, and security scans to mirror professional workflows.

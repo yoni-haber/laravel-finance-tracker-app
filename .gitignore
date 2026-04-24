@@ -23,3 +23,11 @@ yarn-error.log
 /.zed
 AGENTS.md
 .github/copilot-instructions.md
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
