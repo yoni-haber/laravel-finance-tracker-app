@@ -89,9 +89,13 @@ final class InteractsWithSelectedPeriodTest extends TestCase
     public static function selectedPeriodUpdateProvider(): Iterator
     {
         yield 'in range values pass through' => [8, 2026, 8, 2026];
+
         yield 'month below range is clamped' => [0, 2026, 1, 2026];
+
         yield 'month above range is clamped' => [13, 2026, 12, 2026];
+
         yield 'year below range is clamped' => [4, 1999, 4, SelectedPeriod::MIN_YEAR];
+
         yield 'year above range is clamped' => [4, 2101, 4, SelectedPeriod::MAX_YEAR];
     }
 
