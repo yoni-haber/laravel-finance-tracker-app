@@ -46,7 +46,7 @@ final class CsvFileReaderTest extends TestCase
         $csvFileReader = new CsvFileReader('/nonexistent/path/file.csv');
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('CSV file not found: /nonexistent/path/file.csv');
+        $this->expectExceptionMessageIsOrContains('CSV file not found: /nonexistent/path/file.csv');
 
         $csvFileReader->readRows();
     }
