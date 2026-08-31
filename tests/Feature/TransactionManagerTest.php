@@ -812,4 +812,44 @@ final class TransactionManagerTest extends TestCase
             ->set('filterParentCategory', 99999)
             ->assertViewHas('transactions');
     }
+
+    public function test_mount_normalises_an_invalid_filter_type_from_the_query_string(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::withQueryParams(['type' => 'invalid'])
+            ->actingAs($user)
+            ->test(TransactionManager::class)
+            ->assertSet('filterType', null);
+    }
+
+    public function test_mount_keeps_a_valid_filter_type_from_the_query_string(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::withQueryParams(['type' => Transaction::TYPE_INCOME])
+            ->actingAs($user)
+            ->test(TransactionManager::class)
+            ->assertSet('filterType', Transaction::TYPE_INCOME);
+    }
+
+    public function test_updated_filter_type_normalises_an_invalid_value_to_null(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(TransactionManager::class)
+            ->set('filterType', 'invalid')
+            ->assertSet('filterType', null);
+    }
+
+    public function test_updated_filter_type_keeps_a_valid_expense_value(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(TransactionManager::class)
+            ->set('filterType', Transaction::TYPE_EXPENSE)
+            ->assertSet('filterType', Transaction::TYPE_EXPENSE);
+    }
 }

@@ -147,13 +147,15 @@ class Dashboard extends Component
             })
             ->map(function (Collection $items, int|string $category) use ($type, $categoryParents): array {
                 $firstTransaction = $items->first();
-                $categoryDetails = $firstTransaction?->category_id
+                assert($firstTransaction instanceof Transaction);
+
+                $categoryDetails = $firstTransaction->category_id
                     ? $categoryParents->get($firstTransaction->category_id)
                     : null;
 
                 return [
                     'category' => $categoryDetails['name'] ?? 'Uncategorised',
-                    'category_id' => is_numeric($category) ? (int) $category : null,
+                    'category_id' => is_int($category) ? $category : null,
                     'type' => $type,
                     'total' => Money::fromPennies(
                         Money::normalize($items->sum('amount')),
