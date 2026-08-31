@@ -131,6 +131,7 @@ class Dashboard extends Component
     /**
      * @param Collection<int, Transaction> $transactions
      * @param Collection<int, array{id: int, name: string}> $categoryParents
+     * @return Enumerable<int, array{category: string, category_id: int|null, type: string, total: string}>
      */
     private function categoryTotals(Collection $transactions, string $type, Collection $categoryParents): Enumerable
     {

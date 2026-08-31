@@ -12,6 +12,12 @@ use Tests\TestCase;
 
 final class ResetPasswordCommandTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->mockConsoleOutput = false;
+    }
+
     use RefreshDatabase;
 
     public function test_resets_an_existing_users_password(): void

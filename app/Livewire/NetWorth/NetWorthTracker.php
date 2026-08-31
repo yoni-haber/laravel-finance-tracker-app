@@ -8,6 +8,7 @@ use App\Models\NetWorthEntry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -173,17 +174,20 @@ class NetWorthTracker extends Component
         session()->flash('status', 'Net worth entry removed.');
     }
 
-    public function getCalculatedNetWorthProperty(): string
+    #[Computed]
+    public function calculatedNetWorth(): string
     {
         return number_format($this->assetTotal() - $this->liabilityTotal(), 2);
     }
 
-    public function getCalculatedNetWorthValueProperty(): float
+    #[Computed]
+    public function calculatedNetWorthValue(): float
     {
         return $this->assetTotal() - $this->liabilityTotal();
     }
 
-    public function getCalculatedNetWorthStyleProperty(): string
+    #[Computed]
+    public function calculatedNetWorthStyle(): string
     {
         return $this->calculatedNetWorthValue >= 0
             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'

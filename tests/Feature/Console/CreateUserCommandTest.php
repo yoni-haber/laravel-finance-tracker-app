@@ -12,6 +12,12 @@ use Tests\TestCase;
 
 final class CreateUserCommandTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->mockConsoleOutput = false;
+    }
+
     use RefreshDatabase;
 
     public function test_creates_a_pre_verified_user(): void
