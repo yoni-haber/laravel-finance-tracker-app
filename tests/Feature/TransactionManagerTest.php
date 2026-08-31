@@ -497,6 +497,73 @@ final class TransactionManagerTest extends TestCase
                 && $transactions->every(fn ($t): bool => $t->category_id === $category->id));
     }
 
+    public function test_query_parameters_initialise_transaction_filters(): void
+    {
+        $user = User::factory()->create();
+        $parent = Category::factory()->for($user)->expense()->create(['name' => 'Food']);
+        $sub = Category::factory()->subcategoryOf($parent)->create(['name' => 'Groceries']);
+
+        Livewire::withQueryParams([
+            'category' => $parent->id,
+            'subcategory' => $sub->id,
+            'type' => Transaction::TYPE_EXPENSE,
+        ])
+            ->actingAs($user)
+            ->test(TransactionManager::class)
+            ->assertSet('filterParentCategory', $parent->id)
+            ->assertSet('filterSubCategory', $sub->id)
+            ->assertSet('filterType', Transaction::TYPE_EXPENSE);
+    }
+
+    public function test_category_and_type_query_parameters_filter_transactions(): void
+    {
+        Carbon::setTestNow('2024-06-15');
+
+        $user = User::factory()->create(['selected_month' => 6, 'selected_year' => 2024]);
+        $parent = Category::factory()->for($user)->expense()->create(['name' => 'Food']);
+        $sub = Category::factory()->subcategoryOf($parent)->create(['name' => 'Groceries']);
+        $other = Category::factory()->for($user)->expense()->create(['name' => 'Housing']);
+
+        Transaction::factory()->for($user)->create([
+            'category_id' => $parent->id,
+            'type' => Transaction::TYPE_EXPENSE,
+            'amount' => '25.00',
+            'date' => '2024-06-08',
+            'is_recurring' => false,
+        ]);
+        Transaction::factory()->for($user)->create([
+            'category_id' => $sub->id,
+            'type' => Transaction::TYPE_EXPENSE,
+            'amount' => '50.00',
+            'date' => '2024-06-10',
+            'is_recurring' => false,
+        ]);
+        Transaction::factory()->for($user)->create([
+            'category_id' => $other->id,
+            'type' => Transaction::TYPE_EXPENSE,
+            'amount' => '100.00',
+            'date' => '2024-06-10',
+            'is_recurring' => false,
+        ]);
+        Transaction::factory()->for($user)->create([
+            'category_id' => $parent->id,
+            'type' => Transaction::TYPE_INCOME,
+            'amount' => '200.00',
+            'date' => '2024-06-10',
+            'is_recurring' => false,
+        ]);
+
+        Livewire::withQueryParams([
+            'category' => $parent->id,
+            'type' => Transaction::TYPE_EXPENSE,
+        ])
+            ->actingAs($user)
+            ->test(TransactionManager::class)
+            ->assertViewHas('transactions', fn ($transactions): bool => $transactions->count() === 2
+                && $transactions->every(fn ($transaction): bool => $transaction->type === Transaction::TYPE_EXPENSE)
+                && $transactions->pluck('category_id')->sort()->values()->all() === [$parent->id, $sub->id]);
+    }
+
     public function test_render_filter_by_parent_category_includes_subcategory_transactions(): void
     {
         Carbon::setTestNow('2024-06-15');
