@@ -16,6 +16,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('components.layouts.app')]
@@ -42,15 +43,19 @@ class TransactionManager extends Component
 
     public ?int $transactionId = null;
 
+    #[Url(as: 'category')]
     public ?int $filterParentCategory = null;
 
+    #[Url(as: 'subcategory')]
     public ?int $filterSubCategory = null;
 
+    #[Url(as: 'type')]
     public ?string $filterType = null;
 
     public function mount(): void
     {
         $this->date = $this->defaultTransactionDate();
+        $this->normaliseFilterType();
     }
 
     public function render(): View
@@ -193,6 +198,11 @@ class TransactionManager extends Component
         $this->filterSubCategory = null;
     }
 
+    public function updatedFilterType(): void
+    {
+        $this->normaliseFilterType();
+    }
+
     public function updatedIsRecurring(bool $value): void
     {
         if (!$value) {
@@ -234,6 +244,16 @@ class TransactionManager extends Component
         return $selectedPeriod->isCurrentMonth()
             ? now()->toDateString()
             : $selectedPeriod->startOfMonth()->toDateString();
+    }
+
+    private function normaliseFilterType(): void
+    {
+        if (
+            $this->filterType !== null
+            && !in_array($this->filterType, [Transaction::TYPE_INCOME, Transaction::TYPE_EXPENSE], true)
+        ) {
+            $this->filterType = null;
+        }
     }
 
     /**

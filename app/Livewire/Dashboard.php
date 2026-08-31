@@ -98,17 +98,20 @@ class Dashboard extends Component
             ];
         });
 
-        // Build a category-id → parent-name map for the pie chart rollup.
+        // Build a category-id -> parent identity map for the pie chart rollup.
         // Subcategory amounts are grouped under their parent's name.
-        $categoryParentNames = Category::forUser($userId)
+        $categoryParents = Category::forUser($userId)
             ->with('parent:id,name')
             ->get()
-            ->mapWithKeys(fn ($cat): array => [
-                $cat->id => $cat->parent ? $cat->parent->name : $cat->name,
+            ->mapWithKeys(fn (Category $category): array => [
+                $category->id => [
+                    'id' => $category->parent ? $category->parent->id : $category->id,
+                    'name' => $category->parent ? $category->parent->name : $category->name,
+                ],
             ]);
 
-        $enumerable = $this->categoryTotals($transactions, Transaction::TYPE_INCOME, $categoryParentNames);
-        $categoryExpenses = $this->categoryTotals($transactions, Transaction::TYPE_EXPENSE, $categoryParentNames);
+        $enumerable = $this->categoryTotals($transactions, Transaction::TYPE_INCOME, $categoryParents);
+        $categoryExpenses = $this->categoryTotals($transactions, Transaction::TYPE_EXPENSE, $categoryParents);
 
         $this->dispatch('dashboard-charts-updated',
             incomeCategoryBreakdown: $enumerable->all(),
@@ -127,26 +130,37 @@ class Dashboard extends Component
 
     /**
      * @param Collection<int, Transaction> $transactions
-     * @param Collection<int, Category> $categoryParentNames
-     * @return Collection<int, array{category: int|string, total: string}>
+     * @param Collection<int, array{id: int, name: string}> $categoryParents
+     * @return Enumerable<int, array{category: string, category_id: int|null, type: string, total: string}>
      */
-    private function categoryTotals(Collection $transactions, string $type, Collection $categoryParentNames): Enumerable
+    private function categoryTotals(Collection $transactions, string $type, Collection $categoryParents): Enumerable
     {
         return $transactions
             ->where('type', $type)
-            ->groupBy(function ($t) use ($categoryParentNames) {
-                if (!$t->category_id) {
+            ->groupBy(function (Transaction $transaction) use ($categoryParents): int|string {
+                if (!$transaction->category_id) {
                     return 'Uncategorised';
                 }
 
-                // Roll subcategory amounts up to the parent name.
-                return $categoryParentNames->get($t->category_id) ?? $t->category->name ?? 'Uncategorised';
+                // Roll subcategory amounts up to the parent category ID.
+                return $categoryParents->get($transaction->category_id)['id'] ?? $transaction->category_id;
             })
-            ->map(fn ($items, $category): array => [
-                'category' => $category,
-                'total' => Money::fromPennies(
-                    Money::normalize($items->sum('amount')),
-                ),
-            ])->values();
+            ->map(function (Collection $items, int|string $category) use ($type, $categoryParents): array {
+                $firstTransaction = $items->first();
+                assert($firstTransaction instanceof Transaction);
+
+                $categoryDetails = $firstTransaction->category_id
+                    ? $categoryParents->get($firstTransaction->category_id)
+                    : null;
+
+                return [
+                    'category' => $categoryDetails['name'] ?? 'Uncategorised',
+                    'category_id' => is_int($category) ? $category : null,
+                    'type' => $type,
+                    'total' => Money::fromPennies(
+                        Money::normalize($items->sum('amount')),
+                    ),
+                ];
+            })->values();
     }
 }

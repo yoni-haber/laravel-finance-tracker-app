@@ -64,7 +64,8 @@
 
     <div id="dashboardChartPayload" class="hidden"
          data-income-breakdown='@json($incomeCategoryBreakdown->toArray())'
-         data-expense-breakdown='@json($expenseCategoryBreakdown->toArray())'></div>
+         data-expense-breakdown='@json($expenseCategoryBreakdown->toArray())'
+         data-transactions-url="{{ route('transactions', absolute: false) }}"></div>
 
     <script>
         function renderCharts(payload) {
@@ -94,12 +95,46 @@
                 '#f43f5e'
             ];
 
+            const transactionsUrl = payload.transactionsUrl ?? getTransactionsUrlFromDom();
+
+            const navigateToTransactions = (item) => {
+                if (!item?.type || !transactionsUrl) return;
+
+                const url = new URL(transactionsUrl, window.location.origin);
+                url.searchParams.set('type', item.type);
+
+                if (item.category_id !== null && item.category_id !== undefined && item.category_id !== '') {
+                    url.searchParams.set('category', item.category_id);
+                }
+
+                if (window.Livewire?.navigate) {
+                    window.Livewire.navigate(url.toString());
+
+                    return;
+                }
+
+                window.location.assign(url.toString());
+            };
+
+            const clickableChartOptions = (items) => ({
+                onClick: (event, elements) => {
+                    const firstElement = elements[0];
+                    if (!firstElement) return;
+
+                    navigateToTransactions(items[firstElement.index]);
+                },
+                onHover: (event, elements, chart) => {
+                    chart.canvas.style.cursor = elements.length ? 'pointer' : 'default';
+                },
+            });
+
             window._incomeCategoryChart = new Chart(incomeCategoryCtx, {
                 type: 'pie',
                 data: {
                     labels: payload.incomeCategoryBreakdown.map(item => item.category),
                     datasets: [{ data: payload.incomeCategoryBreakdown.map(item => item.total), backgroundColor: colours }]
-                }
+                },
+                options: clickableChartOptions(payload.incomeCategoryBreakdown),
             });
 
             window._expenseCategoryChart = new Chart(expenseCategoryCtx, {
@@ -107,8 +142,15 @@
                 data: {
                     labels: payload.expenseCategoryBreakdown.map(item => item.category),
                     datasets: [{ data: payload.expenseCategoryBreakdown.map(item => item.total), backgroundColor: colours }]
-                }
+                },
+                options: clickableChartOptions(payload.expenseCategoryBreakdown),
             });
+        }
+
+        function getTransactionsUrlFromDom() {
+            const payloadNode = document.getElementById('dashboardChartPayload');
+
+            return payloadNode?.dataset.transactionsUrl ?? null;
         }
 
         function getPayloadFromDom() {
@@ -119,6 +161,7 @@
                 return {
                     incomeCategoryBreakdown: JSON.parse(payloadNode.dataset.incomeBreakdown ?? '[]'),
                     expenseCategoryBreakdown: JSON.parse(payloadNode.dataset.expenseBreakdown ?? '[]'),
+                    transactionsUrl: payloadNode.dataset.transactionsUrl,
                 };
             } catch (error) {
                 console.error('Unable to parse dashboard chart payload', error);

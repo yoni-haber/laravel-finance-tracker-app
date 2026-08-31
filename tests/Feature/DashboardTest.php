@@ -262,13 +262,15 @@ final class DashboardTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(Dashboard::class)
-            ->assertViewHas('expenseCategoryBreakdown', function ($breakdown): bool {
+            ->assertViewHas('expenseCategoryBreakdown', function ($breakdown) use ($foodParent): bool {
                 $food = collect($breakdown)->firstWhere('category', 'Food');
                 $groceries = collect($breakdown)->firstWhere('category', 'Groceries');
 
                 // Both parent and subcategory transactions should be grouped under "Food".
                 return $food !== null
                     && $food['total'] === '100.00'
+                    && $food['category_id'] === $foodParent->id
+                    && $food['type'] === Transaction::TYPE_EXPENSE
                     && $groceries === null; // Groceries should not appear as its own entry.
             });
     }
